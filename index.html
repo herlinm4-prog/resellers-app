@@ -43,7 +43,6 @@
 
   .mono{ font-family:'Space Mono', ui-monospace, monospace; }
 
-  /* ---------- Phone frame ---------- */
   .stage{
     width:100vw; height:100vh;
     display:flex; align-items:center; justify-content:center;
@@ -75,7 +74,6 @@
   }
   .screen::-webkit-scrollbar{ display:none; }
 
-  /* ---------- Status bar / Dynamic island ---------- */
   .statusbar{
     display:flex; align-items:center; justify-content:space-between;
     padding:18px 28px 6px;
@@ -90,7 +88,6 @@
   }
   @media (min-width:560px){ .island{ display:block; } }
 
-  /* ---------- Header ---------- */
   .app-header{
     display:flex; align-items:center; justify-content:space-between;
     padding:14px 22px 10px;
@@ -114,10 +111,8 @@
     color:var(--text-dim);
   }
 
-  /* ---------- Scroll content ---------- */
   .content{ padding:6px 20px 130px; flex:1; }
 
-  /* ---------- Scanner card ---------- */
   .scan-card{
     position:relative;
     height:250px;
@@ -168,7 +163,6 @@
     z-index:5;
   }
 
-  /* ---------- Real camera layer ---------- */
   #scannerContainer{
     position:absolute; inset:0; z-index:1;
   }
@@ -215,7 +209,6 @@
   }
   .cam-permission-note.show{ display:block; }
 
-  /* ---------- Loading state ---------- */
   .analyzing{
     position:absolute; inset:0;
     background:var(--surface);
@@ -234,7 +227,6 @@
   @keyframes spin{ to{ transform:rotate(360deg); } }
   .analyzing-text{ font-size:13px; color:var(--text-dim); }
 
-  /* ---------- Result section ---------- */
   #result{
     opacity:0; transform:translateY(14px);
     pointer-events:none;
@@ -247,7 +239,6 @@
     color:var(--text-faint); margin:26px 2px 10px;
   }
 
-  /* Product identified card */
   .product-card{
     display:flex; align-items:center; gap:13px;
     background:var(--surface); border:1px solid var(--stroke);
@@ -268,7 +259,6 @@
     letter-spacing:0.3px;
   }
 
-  /* Ticket / price card — signature element */
   .ticket{
     margin-top:14px;
     background:var(--surface);
@@ -310,7 +300,6 @@
   .price-value.avg{ color:var(--text); }
   .price-value.max{ color:var(--gold); }
 
-  /* Gauge */
   .gauge-wrap{ padding-top:4px; }
   .gauge-track{
     position:relative;
@@ -339,7 +328,6 @@
     margin-top:34px; font-size:11.5px; color:var(--text-dim); text-align:center;
   }
 
-  /* Opportunity pill */
   .opportunity{
     display:inline-flex; align-items:center; gap:6px;
     margin-top:16px;
@@ -349,7 +337,6 @@
     padding:7px 12px; border-radius:20px;
   }
 
-  /* Advice card */
   .advice-card{
     margin-top:14px;
     background:var(--surface); border:1px solid var(--stroke);
@@ -378,7 +365,6 @@
   .suggested-value{ font-size:22px; font-weight:700; color:var(--mint); }
   .margin-note{ font-size:11px; color:var(--text-faint); margin-top:2px; }
 
-  /* CTA */
   .cta-bar{
     position:absolute; left:0; right:0; bottom:0;
     padding:14px 20px calc(22px + env(safe-area-inset-bottom));
@@ -443,6 +429,12 @@
 
       <div class="content">
 
+        <div style="margin:10px 2px 14px;">
+          <div class="price-label" style="margin-bottom:6px;">Store cost (optional)</div>
+          <input id="costInput" class="mono" type="text" inputmode="decimal" placeholder="e.g. 12.99"
+            style="width:100%;background:var(--surface);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:11px 13px;font-size:14px;">
+        </div>
+
         <div class="scan-card" id="scanCard" onclick="startScanner()">
           <div id="scannerContainer"></div>
           <div class="cam-tint"></div>
@@ -478,7 +470,7 @@
               </svg>
             </div>
             <div class="product-info">
-              <div class="product-name">Nike Air Max 90 — Size 10 US</div>
+              <div class="product-name" id="productName">—</div>
               <div class="product-meta">Scanned code <span class="mono" id="scannedCode">—</span></div>
             </div>
             <div class="badge-found">✓ Read</div>
@@ -488,9 +480,9 @@
           <div class="ticket">
             <div class="ticket-barcode"></div>
             <div class="ticket-body">
-              <div class="confidence-row"><span class="dot"></span> High confidence — 11 confirmed sales</div>
-              <div style="font-size:10.5px;color:var(--text-faint);margin:-10px 0 14px;line-height:1.5;">
-                The code above was read live by your camera. These prices are sample data — in production they'll connect to the eBay data source we set up.
+              <div class="confidence-row"><span class="dot"></span> <span id="confidenceText">Checking…</span></div>
+              <div style="font-size:10.5px;color:var(--text-faint);margin:-10px 0 14px;line-height:1.5;" id="sourceNote">
+                Prices come from eBay's live Browse API (active listings).
               </div>
 
               <div class="price-grid">
@@ -511,12 +503,12 @@
               <div class="gauge-wrap">
                 <div class="gauge-track">
                   <div class="gauge-marker" id="gaugeMarker"></div>
-                  <div class="gauge-caption" id="gaugeCaption">Suggested $31</div>
+                  <div class="gauge-caption" id="gaugeCaption">Suggested $0</div>
                 </div>
-                <div class="refs-count">18 references analyzed · 11 sold · 7 active</div>
+                <div class="refs-count" id="refsCount">— references analyzed</div>
               </div>
 
-              <div class="opportunity">🌟 Good opportunity</div>
+              <div class="opportunity" id="opportunityPill">— </div>
             </div>
           </div>
 
@@ -530,29 +522,32 @@
               </div>
               <div class="advice-title">Resellers Insight</div>
             </div>
-            <div class="advice-text">
-              Most confirmed sales cluster between <b>$28 and $37</b>, with just two outlier sales near $58 pulling the average up. List at <b>$31</b>: it competes well against the bulk of the market without giving away margin.
-            </div>
+            <div class="advice-text" id="adviceText">—</div>
             <div class="suggested-row">
               <div>
                 <div class="suggested-label">SUGGESTED PRICE</div>
                 <div class="margin-note">Estimated profit after fees & shipping</div>
               </div>
               <div style="text-align:right;">
-                <div class="suggested-value mono">$31</div>
-                <div class="margin-note">≈ $8.20 margin</div>
+                <div class="suggested-value mono" id="suggestedValue">$0</div>
+                <div class="margin-note" id="marginNote">—</div>
               </div>
             </div>
           </div>
 
         </div>
+
+        <div id="notFound" style="display:none;text-align:center;padding:30px 10px;color:var(--text-dim);font-size:13.5px;">
+          No eBay price references found for this product.
+        </div>
+
       </div>
 
     </div>
 
     <div class="cta-bar" id="ctaBar">
-      <button class="cta-btn">
-        List on eBay for $31
+      <button class="cta-btn" id="ctaBtn">
+        <span id="ctaLabel">List on eBay</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062017" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
       </button>
     </div>
@@ -665,38 +660,105 @@
     proceedWithCode(val);
   }
 
+  const BACKEND_URL = 'https://reseller-backend-9exp.onrender.com';
+
+  const OPPORTUNITY_LABELS = {
+    especial: '🌟 Special opportunity',
+    buena: '✅ Good opportunity',
+    normal: '🙂 Normal opportunity',
+    no_recomendado: '⚠️ Not recommended',
+    sin_costo: 'ℹ️ Add store cost for a full recommendation'
+  };
+
   function proceedWithCode(code){
     document.getElementById('camNote').classList.remove('show');
     document.getElementById('scannedCode').textContent = code;
     document.getElementById('analyzing').classList.add('show');
+    document.getElementById('notFound').style.display = 'none';
+    document.getElementById('result').classList.remove('visible');
+    document.getElementById('ctaBar').classList.remove('visible');
 
-    setTimeout(() => {
-      document.getElementById('analyzing').classList.remove('show');
-      document.getElementById('scannerContainer').style.display = 'none';
+    const costRaw = document.getElementById('costInput').value.trim();
+    const costPrice = costRaw ? Number(costRaw) : undefined;
 
-      const min = 22, avg = 34, max = 58, suggested = 31;
-      const range = max - min;
-      const markerPos = ((suggested - min) / range) * 100;
+    fetch(BACKEND_URL + '/api/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ barcode: code, costPrice })
+    })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('analyzing').classList.remove('show');
+        document.getElementById('scannerContainer').style.display = 'none';
 
-      countUp(document.getElementById('valMin'), min, '$', 700);
-      countUp(document.getElementById('valAvg'), avg, '$', 900);
-      countUp(document.getElementById('valMax'), max, '$', 1100);
+        if (!data.found) {
+          document.getElementById('notFound').style.display = 'block';
+          document.getElementById('screen').scrollTo({ top: 60, behavior: 'smooth' });
+          return;
+        }
 
-      document.getElementById('result').classList.add('visible');
-      document.getElementById('ctaBar').classList.add('visible');
-
-      const marker = document.getElementById('gaugeMarker');
-      const caption = document.getElementById('gaugeCaption');
-      marker.style.left = markerPos + '%';
-      caption.style.left = markerPos + '%';
-
-      requestAnimationFrame(() => {
-        marker.classList.add('show');
-        caption.classList.add('show');
+        renderResult(data);
+      })
+      .catch(err => {
+        document.getElementById('analyzing').classList.remove('show');
+        document.getElementById('scannerContainer').style.display = 'none';
+        document.getElementById('notFound').textContent = 'Could not reach the backend. Please try again.';
+        document.getElementById('notFound').style.display = 'block';
       });
+  }
 
-      document.getElementById('screen').scrollTo({ top: 60, behavior: 'smooth' });
-    }, 1400);
+  function renderResult(data){
+    const min = data.min, avg = data.avg, max = data.max, median = data.median, suggested = data.suggested;
+
+    document.getElementById('productName').textContent =
+      (data.product && data.product.title) || data.query || 'Product';
+
+    document.getElementById('confidenceText').textContent =
+      data.confidence === 'alta'
+        ? `High confidence — ${data.referenceCount} confirmed sales`
+        : `Estimated from ${data.referenceCount} active listings`;
+
+    document.getElementById('sourceNote').textContent =
+      data.dataSource === 'sold_confirmed'
+        ? 'Prices come from confirmed eBay sales.'
+        : "Prices come from eBay's live Browse API (active listings, not confirmed sales).";
+
+    countUp(document.getElementById('valMin'), min, '$', 700);
+    countUp(document.getElementById('valAvg'), avg, '$', 900);
+    countUp(document.getElementById('valMax'), max, '$', 1100);
+
+    const range = Math.max(max - min, 0.01);
+    const markerPos = Math.min(100, Math.max(0, ((suggested - min) / range) * 100));
+
+    document.getElementById('gaugeCaption').textContent = `Suggested $${suggested}`;
+    document.getElementById('refsCount').textContent = `${data.referenceCount} references analyzed`;
+
+    document.getElementById('opportunityPill').textContent =
+      OPPORTUNITY_LABELS[data.opportunity] || data.opportunity;
+
+    document.getElementById('adviceText').innerHTML =
+      `Most references cluster around the median of <b>$${median}</b>. We suggest listing at <b>$${suggested}</b>: it balances the bulk of the market (avg $${avg}) without giving away margin.`;
+
+    document.getElementById('suggestedValue').textContent = `$${suggested}`;
+    document.getElementById('marginNote').textContent =
+      data.estimatedMargin != null ? `≈ $${data.estimatedMargin} margin` : 'Add store cost to see margin';
+
+    document.getElementById('ctaLabel').textContent = `List on eBay for $${suggested}`;
+
+    document.getElementById('result').classList.add('visible');
+    document.getElementById('ctaBar').classList.add('visible');
+
+    const marker = document.getElementById('gaugeMarker');
+    const caption = document.getElementById('gaugeCaption');
+    marker.style.left = markerPos + '%';
+    caption.style.left = markerPos + '%';
+
+    requestAnimationFrame(() => {
+      marker.classList.add('show');
+      caption.classList.add('show');
+    });
+
+    document.getElementById('screen').scrollTo({ top: 60, behavior: 'smooth' });
   }
 </script>
 
