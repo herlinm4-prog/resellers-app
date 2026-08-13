@@ -249,6 +249,10 @@
     background:linear-gradient(160deg, #232A33, #171C22);
     display:flex; align-items:center; justify-content:center;
     color:var(--text-faint);
+    overflow:hidden;
+  }
+  .product-thumb img{
+    width:100%; height:100%; object-fit:cover; display:block;
   }
   .product-info{ flex:1; min-width:0; }
   .product-name{ font-size:14.5px; font-weight:600; line-height:1.25; }
@@ -420,11 +424,23 @@
           </div>
           <div class="brand-name">Re<span>sellers</span></div>
         </div>
-        <div class="icon-btn">
+        <div class="icon-btn" onclick="openHistory()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            <path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>
           </svg>
         </div>
+      </div>
+
+      <div id="historyPanel" style="display:none;position:absolute;inset:0;z-index:50;background:var(--ink);flex-direction:column;">
+        <div class="app-header">
+          <div class="brand-name">Scan history</div>
+          <div class="icon-btn" onclick="closeHistory()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </div>
+        </div>
+        <div id="historyList" style="flex:1;overflow-y:auto;padding:6px 20px 30px;"></div>
       </div>
 
       <div class="content">
@@ -464,10 +480,11 @@
 
           <div class="section-label">Product identified</div>
           <div class="product-card">
-            <div class="product-thumb">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <div class="product-thumb" id="productThumb">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" id="productThumbIcon">
                 <path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/>
               </svg>
+              <img id="productThumbImg" style="display:none;" alt="" onerror="this.style.display='none'; document.getElementById('productThumbIcon').style.display='block';">
             </div>
             <div class="product-info">
               <div class="product-name" id="productName">—</div>
@@ -539,6 +556,11 @@
 
         <div id="notFound" style="display:none;text-align:center;padding:30px 10px;color:var(--text-dim);font-size:13.5px;">
           No eBay price references found for this product.
+          <div style="margin-top:16px;">
+            <button onclick="rescan()" style="border:1px solid var(--stroke);background:var(--surface-2);color:var(--text);border-radius:14px;padding:11px 18px;font-family:'Space Grotesk',sans-serif;font-size:13.5px;font-weight:600;">
+              Scan another item
+            </button>
+          </div>
         </div>
 
       </div>
@@ -549,6 +571,9 @@
       <button class="cta-btn" id="ctaBtn">
         <span id="ctaLabel">List on eBay</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062017" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </button>
+      <button onclick="rescan()" style="width:100%;margin-top:9px;border:1px solid var(--stroke);background:var(--surface-2);color:var(--text-dim);border-radius:14px;padding:12px;font-family:'Space Grotesk',sans-serif;font-size:13.5px;font-weight:600;">
+        Scan another item
       </button>
     </div>
 
@@ -561,6 +586,7 @@
   let scanned = false;
   let quaggaRunning = false;
   let fallbackTimer = null;
+  let cameraPermissionGranted = false;
 
   function countUp(el, target, prefix, duration){
     const start = performance.now();
@@ -575,6 +601,12 @@
 
   function startScanner(){
     if(scanned || quaggaRunning) return;
+
+    if(cameraPermissionGranted){
+      initQuagga();
+      return;
+    }
+
     const hint = document.getElementById('shutterHint');
     hint.textContent = 'Requesting camera…';
 
@@ -585,6 +617,7 @@
 
     navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
       .then(stream => {
+        cameraPermissionGranted = true;
         stream.getTracks().forEach(t => t.stop());
         initQuagga();
       })
@@ -670,6 +703,84 @@
     sin_costo: 'ℹ️ Add store cost for a full recommendation'
   };
 
+  const HISTORY_KEY = 'resellers_history';
+
+  function loadHistory(){
+    try {
+      return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function saveToHistory(code, data){
+    const history = loadHistory();
+    const name = (data.product && data.product.title) || data.query || code;
+    history.unshift({
+      code,
+      name,
+      query: data.query || name,
+      image: (data.product && data.product.images && data.product.images[0]) || null,
+      suggested: data.suggested,
+      opportunity: data.opportunity,
+      dataSource: data.dataSource,
+      timestamp: Date.now()
+    });
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 30)));
+  }
+
+  function openHistory(){
+    const history = loadHistory();
+    const list = document.getElementById('historyList');
+    if(history.length === 0){
+      list.innerHTML = '<div style="text-align:center;color:var(--text-faint);font-size:13px;padding:40px 10px;">No scans yet — your history will show up here.</div>';
+    } else {
+      list.innerHTML = history.map(item => {
+        const date = new Date(item.timestamp);
+        const label = OPPORTUNITY_LABELS[item.opportunity] || '';
+        const searchUrl = 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(item.query || item.name);
+        const thumb = item.image
+          ? `<img src="${item.image}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='📦';">`
+          : '📦';
+        return `
+          <a href="${searchUrl}" target="_blank" rel="noopener"
+             style="text-decoration:none;color:inherit;display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--stroke);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
+            <div style="width:46px;height:46px;border-radius:12px;flex-shrink:0;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;">${thumb}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13.5px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-bottom:5px;">${date.toLocaleDateString()} · ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+              <span style="font-size:10.5px;color:var(--gold);font-weight:700;">${label}</span>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div class="mono" style="font-size:16px;font-weight:700;color:var(--mint);">$${item.suggested}</div>
+              <div style="font-size:9.5px;color:var(--text-faint);margin-top:2px;">View on eBay ↗</div>
+            </div>
+          </a>`;
+      }).join('');
+    }
+    document.getElementById('historyPanel').style.display = 'flex';
+  }
+
+  function closeHistory(){
+    document.getElementById('historyPanel').style.display = 'none';
+  }
+
+  function rescan(){
+    scanned = false;
+    document.getElementById('result').classList.remove('visible');
+    document.getElementById('ctaBar').classList.remove('visible');
+    document.getElementById('notFound').style.display = 'none';
+    document.getElementById('scannerContainer').style.display = 'block';
+    document.getElementById('shutterHint').style.display = 'block';
+    document.getElementById('shutterHint').textContent = 'Tap to scan';
+    document.getElementById('screen').scrollTo({ top: 0, behavior: 'smooth' });
+
+    const marker = document.getElementById('gaugeMarker');
+    const caption = document.getElementById('gaugeCaption');
+    marker.classList.remove('show');
+    caption.classList.remove('show');
+  }
+
   function proceedWithCode(code){
     document.getElementById('camNote').classList.remove('show');
     document.getElementById('scannedCode').textContent = code;
@@ -709,6 +820,20 @@
 
   function renderResult(data){
     const min = data.min, avg = data.avg, max = data.max, median = data.median, suggested = data.suggested;
+
+    saveToHistory(document.getElementById('scannedCode').textContent, data);
+
+    const thumbImg = document.getElementById('productThumbImg');
+    const thumbIcon = document.getElementById('productThumbIcon');
+    const imageUrl = data.product && data.product.images && data.product.images[0];
+    if (imageUrl) {
+      thumbImg.src = imageUrl;
+      thumbImg.style.display = 'block';
+      thumbIcon.style.display = 'none';
+    } else {
+      thumbImg.style.display = 'none';
+      thumbIcon.style.display = 'block';
+    }
 
     document.getElementById('productName').textContent =
       (data.product && data.product.title) || data.query || 'Product';
