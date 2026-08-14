@@ -468,6 +468,10 @@
 
           <div class="shutter-hint" id="shutterHint">Tap to scan</div>
           <div class="cam-permission-note" id="camNote">Camera live — point at the barcode</div>
+          <div id="torchBtn" onclick="event.stopPropagation(); toggleTorch();"
+            style="display:none;position:absolute;top:14px;left:16px;z-index:6;width:30px;height:30px;border-radius:50%;background:rgba(240,180,41,0.15);border:1px solid rgba(240,180,41,0.35);align-items:center;justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0B429" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          </div>
 
           <div class="scan-frame">
             <div class="corner tl"></div><div class="corner tr"></div>
@@ -597,7 +601,7 @@
   let scanned = false;
   let quaggaRunning = false;
   let fallbackTimer = null;
-  let cameraPermissionGranted = false;
+  let cameraPermissionGranted = (localStorage.getItem('resellers_cam_ok') === '1');
 
   function countUp(el, target, prefix, duration){
     const start = performance.now();
@@ -626,9 +630,17 @@
       return;
     }
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
+    const camTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('camera-timeout')), 12000)
+    );
+
+    Promise.race([
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } }),
+      camTimeout
+    ])
       .then(stream => {
         cameraPermissionGranted = true;
+        localStorage.setItem('resellers_cam_ok', '1');
         stream.getTracks().forEach(t => t.stop());
         initQuagga();
       })
@@ -637,11 +649,32 @@
       });
   }
 
+  let pendingCode = null;
+  let pendingCodeCount = 0;
+  let initGuardTimer = null;
+
+  function resetScannerContainer(){
+    const container = document.getElementById('scannerContainer');
+    while(container.firstChild) container.removeChild(container.firstChild);
+  }
+
   function initQuagga(){
     if(typeof Quagga === 'undefined'){
       showManualFallback('Couldn\'t load the scanner. Type the code instead:');
       return;
     }
+
+    // Wipe any leftover video/canvas from a previous session so Quagga
+    // doesn't attach a second feed on top of a frozen one ("stuck camera" bug).
+    resetScannerContainer();
+
+    // Safety net: if Quagga's init callback never fires (some iOS Safari /
+    // permission edge cases), fall back to manual entry instead of hanging.
+    initGuardTimer = setTimeout(() => {
+      if(!quaggaRunning && !scanned){
+        showManualFallback('Scanner is taking too long. Type the code instead:');
+      }
+    }, 10000);
 
     Quagga.init({
       inputStream: {
@@ -655,15 +688,19 @@
       decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'] },
       locate: true
     }, function(err){
+      clearTimeout(initGuardTimer);
       if(err){
         showManualFallback('Couldn\'t start the scanner. Type the code instead:');
         return;
       }
       Quagga.start();
       quaggaRunning = true;
+      pendingCode = null;
+      pendingCodeCount = 0;
       document.getElementById('scanCard').classList.add('camera-active');
       document.getElementById('shutterHint').style.display = 'none';
       document.getElementById('camNote').classList.add('show');
+      setupTorchButton();
 
       fallbackTimer = setTimeout(() => {
         if(!scanned) showManualFallback('Not detecting? Type the code instead:');
@@ -673,14 +710,60 @@
     Quagga.onDetected(handleDetected);
   }
 
+  function stopQuagga(){
+    if(quaggaRunning){
+      try { Quagga.offDetected(handleDetected); Quagga.stop(); } catch(e) {}
+      quaggaRunning = false;
+    }
+    resetScannerContainer();
+    document.getElementById('scanCard').classList.remove('camera-active');
+    document.getElementById('torchBtn').style.display = 'none';
+  }
+
+  // Requires the same code to be read twice in a row before accepting it,
+  // which cuts down on the occasional misread digit from a shaky scan.
   function handleDetected(result){
     if(scanned) return;
     const code = result && result.codeResult ? result.codeResult.code : null;
     if(!code) return;
+
+    if(code === pendingCode){
+      pendingCodeCount++;
+    } else {
+      pendingCode = code;
+      pendingCodeCount = 1;
+    }
+    if(pendingCodeCount < 2) return;
+
     scanned = true;
     clearTimeout(fallbackTimer);
-    if(quaggaRunning){ Quagga.stop(); quaggaRunning = false; }
+    stopQuagga();
     proceedWithCode(code);
+  }
+
+  let torchTrack = null;
+  let torchOn = false;
+
+  function setupTorchButton(){
+    torchTrack = null;
+    torchOn = false;
+    const btn = document.getElementById('torchBtn');
+    btn.style.display = 'none';
+    try {
+      const video = document.querySelector('#scannerContainer video');
+      const stream = video && video.srcObject;
+      const track = stream && stream.getVideoTracks()[0];
+      if(track && track.getCapabilities && track.getCapabilities().torch){
+        torchTrack = track;
+        btn.style.display = 'flex';
+      }
+    } catch(e) { /* torch not supported, ignore */ }
+  }
+
+  function toggleTorch(){
+    if(!torchTrack) return;
+    torchOn = !torchOn;
+    torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(() => {});
   }
 
   function showManualFallback(message){
@@ -699,7 +782,7 @@
     if(!val || scanned) return;
     scanned = true;
     clearTimeout(fallbackTimer);
-    if(quaggaRunning){ Quagga.stop(); quaggaRunning = false; }
+    stopQuagga();
     document.getElementById('manualFallback').classList.remove('show');
     proceedWithCode(val);
   }
@@ -780,6 +863,13 @@
 
   function rescan(){
     scanned = false;
+    pendingCode = null;
+    pendingCodeCount = 0;
+    clearTimeout(fallbackTimer);
+    clearTimeout(initGuardTimer);
+    stopQuagga();
+    document.getElementById('manualFallback').classList.remove('show');
+    document.getElementById('camNote').classList.remove('show');
     document.getElementById('result').classList.remove('visible');
     document.getElementById('ctaBar').classList.remove('visible');
     document.getElementById('notFound').style.display = 'none';
@@ -838,22 +928,35 @@
       });
   }
 
-  function fetchScanOnce(code, costPrice){
+  function fetchScanOnce(code, costPrice, timeoutMs){
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
     return fetch(BACKEND_URL + '/api/scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ barcode: code, costPrice })
+      body: JSON.stringify({ barcode: code, costPrice }),
+      signal: controller.signal
     }).then(res => {
+      clearTimeout(timer);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
+    }).catch(err => {
+      clearTimeout(timer);
+      throw err;
     });
   }
 
-  function fetchScanWithRetry(code, costPrice, attemptsLeft){
-    return fetchScanOnce(code, costPrice).catch(err => {
+  // Render's free tier can take up to ~50s to wake from a cold start, so the
+  // first attempt gets a generous timeout; retries stay shorter since the
+  // server is presumably already awake by then.
+  function fetchScanWithRetry(code, costPrice, attemptsLeft, attemptIndex){
+    attemptIndex = attemptIndex || 0;
+    const timeoutMs = attemptIndex === 0 ? 55000 : 20000;
+    return fetchScanOnce(code, costPrice, timeoutMs).catch(err => {
       if (attemptsLeft <= 1) throw err;
-      return new Promise(resolve => setTimeout(resolve, 4000))
-        .then(() => fetchScanWithRetry(code, costPrice, attemptsLeft - 1));
+      return new Promise(resolve => setTimeout(resolve, 3000))
+        .then(() => fetchScanWithRetry(code, costPrice, attemptsLeft - 1, attemptIndex + 1));
     });
   }
 
