@@ -158,6 +158,30 @@
 
   .content{ padding:6px 20px 130px; flex:1; }
 
+  .welcome-section{ margin-top:22px; }
+  .welcome-head{ text-align:center; margin-bottom:16px; }
+  .welcome-title{ font-size:19px; font-weight:800; letter-spacing:-0.3px; }
+  .welcome-title span{ color:var(--mint); }
+  .welcome-sub{ font-size:12.5px; color:var(--text-dim); margin-top:5px; line-height:1.4; }
+
+  .badge-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .badge-card{
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(135deg, var(--surface), var(--surface-2));
+    border:1px solid var(--stroke); border-radius:16px;
+    padding:12px 12px;
+  }
+  .badge-icon{
+    width:34px; height:34px; border-radius:10px; flex-shrink:0;
+    background:var(--mint-dim);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--mint);
+  }
+  .badge-title{ font-size:12.5px; font-weight:700; line-height:1.2; }
+  .badge-sub{ font-size:10.5px; color:var(--text-dim); margin-top:2px; }
+
   .scan-card{
     position:relative;
     height:250px;
@@ -752,6 +776,69 @@
           </div>
         </div>
 
+        <div class="welcome-section" id="welcomeSection">
+          <div class="welcome-head">
+            <div class="welcome-title" id="welcomeTitle">Welcome to Re<span>sellers</span></div>
+            <div class="welcome-sub" id="welcomeSub">Scan any barcode. Know instantly if it's worth buying.</div>
+          </div>
+          <div class="badge-grid">
+            <div class="badge-card">
+              <div class="badge-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+              </div>
+              <div>
+                <div class="badge-title" id="badge1Title">Global Market Access</div>
+                <div class="badge-sub" id="badge1Sub">eBay's massive marketplace</div>
+              </div>
+            </div>
+            <div class="badge-card">
+              <div class="badge-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>
+              </div>
+              <div>
+                <div class="badge-title" id="badge2Title">Find. Compare. Flip.</div>
+                <div class="badge-sub" id="badge2Sub">Scan → Price → Decide</div>
+              </div>
+            </div>
+            <div class="badge-card">
+              <div class="badge-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg>
+              </div>
+              <div>
+                <div class="badge-title" id="badge3Title">Market Reach</div>
+                <div class="badge-sub" id="badge3Sub">Millions of listings</div>
+              </div>
+            </div>
+            <div class="badge-card">
+              <div class="badge-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 12.9 12.9 20.6a2 2 0 0 1-2.8 0L3 13.5V3h10.5l7.1 7.1a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+              </div>
+              <div>
+                <div class="badge-title" id="badge4Title">Best Deals</div>
+                <div class="badge-sub" id="badge4Sub">Smart price checks</div>
+              </div>
+            </div>
+            <div class="badge-card">
+              <div class="badge-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg>
+              </div>
+              <div>
+                <div class="badge-title" id="badge5Title">Trusted Data</div>
+                <div class="badge-sub" id="badge5Sub">Real-time from eBay</div>
+              </div>
+            </div>
+            <div class="badge-card">
+              <div class="badge-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div>
+                <div class="badge-title" id="badge6Title">Max Profit</div>
+                <div class="badge-sub" id="badge6Sub">Every scan, every time</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="result">
 
           <div class="decision-card" id="decisionCard">
@@ -1232,6 +1319,7 @@
     document.getElementById('ctaBar').classList.remove('visible');
     document.getElementById('notFound').style.display = 'none';
     document.getElementById('scanCard').style.display = 'flex';
+    document.getElementById('welcomeSection').style.display = 'block';
     document.getElementById('shutterHint').style.display = 'none';
     document.getElementById('uploadPhotoBtn').style.display = 'none';
     document.getElementById('searchByNameBtn').style.display = 'none';
@@ -1359,7 +1447,14 @@
       histEmptySaved: 'No saved opportunities yet — tap "Save opportunity" on a result to keep it for later.',
       histEmptyPurchased: 'No purchases logged yet — tap "Buy" on a result to log it here.',
       tabScanned: 'Scanned', tabSaved: 'Saved', tabPurchased: 'Purchased',
-      tapToScan: 'Tap to scan'
+      tapToScan: 'Tap to scan',
+      welcomeTitle: 'Welcome to Resellers', welcomeSub: "Scan any barcode. Know instantly if it's worth buying.",
+      badge1Title: 'Global Market Access', badge1Sub: "eBay's massive marketplace",
+      badge2Title: 'Find. Compare. Flip.', badge2Sub: 'Scan → Price → Decide',
+      badge3Title: 'Market Reach', badge3Sub: 'Millions of listings',
+      badge4Title: 'Best Deals', badge4Sub: 'Smart price checks',
+      badge5Title: 'Trusted Data', badge5Sub: 'Real-time from eBay',
+      badge6Title: 'Max Profit', badge6Sub: 'Every scan, every time'
     },
     es: {
       history: 'Historial', settings: 'Ajustes',
@@ -1385,7 +1480,14 @@
       histEmptySaved: 'Aún no hay oportunidades guardadas — toca "Guardar oportunidad" en un resultado para verlo después.',
       histEmptyPurchased: 'Aún no hay compras registradas — toca "Comprar" en un resultado para registrarlo aquí.',
       tabScanned: 'Escaneados', tabSaved: 'Guardados', tabPurchased: 'Comprados',
-      tapToScan: 'Toca para escanear'
+      tapToScan: 'Toca para escanear',
+      welcomeTitle: 'Bienvenido a Resellers', welcomeSub: 'Escanea cualquier código y sabe al instante si vale la pena comprarlo.',
+      badge1Title: 'Acceso al mercado global', badge1Sub: 'El gran mercado de eBay',
+      badge2Title: 'Busca. Compara. Revende.', badge2Sub: 'Escanea → Precio → Decide',
+      badge3Title: 'Alcance de mercado', badge3Sub: 'Millones de publicaciones',
+      badge4Title: 'Mejores ofertas', badge4Sub: 'Chequeo de precio inteligente',
+      badge5Title: 'Datos confiables', badge5Sub: 'En tiempo real desde eBay',
+      badge6Title: 'Máximo profit', badge6Sub: 'En cada escaneo'
     }
   };
 
@@ -1422,6 +1524,13 @@
     document.getElementById('ctaLabel').textContent = s.buyNext;
     if(!scanned){
       document.getElementById('shutterHint').textContent = s.tapToScan;
+    }
+    document.getElementById('welcomeTitle').innerHTML = loadSettings().language === 'es'
+      ? 'Bienvenido a Re<span>sellers</span>' : 'Welcome to Re<span>sellers</span>';
+    document.getElementById('welcomeSub').textContent = s.welcomeSub;
+    for(let i = 1; i <= 6; i++){
+      document.getElementById(`badge${i}Title`).textContent = s[`badge${i}Title`];
+      document.getElementById(`badge${i}Sub`).textContent = s[`badge${i}Sub`];
     }
     updateScanToggleButton();
   }
@@ -1598,6 +1707,7 @@
     document.getElementById('ctaBar').classList.remove('visible');
     document.getElementById('notFound').style.display = 'none';
     document.getElementById('scanCard').style.display = 'flex';
+    document.getElementById('welcomeSection').style.display = 'block';
     document.getElementById('uploadPhotoBtn').style.display = 'flex';
     document.getElementById('searchByNameBtn').style.display = 'flex';
     setManualMode('barcode');
@@ -1726,6 +1836,7 @@
         clearTimeout(wakeupTimer);
         document.getElementById('analyzing').classList.remove('show');
         document.getElementById('scanCard').style.display = 'none';
+        document.getElementById('welcomeSection').style.display = 'none';
 
         if (!data.found) {
           document.getElementById('notFoundText').textContent = 'No eBay price references found for this product.';
@@ -1740,6 +1851,7 @@
         clearTimeout(wakeupTimer);
         document.getElementById('analyzing').classList.remove('show');
         document.getElementById('scanCard').style.display = 'none';
+        document.getElementById('welcomeSection').style.display = 'none';
         document.getElementById('notFoundText').textContent =
           'Could not reach the backend after a few tries. Check your connection and scan again.';
         document.getElementById('notFound').style.display = 'block';
