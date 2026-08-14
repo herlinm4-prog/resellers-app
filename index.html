@@ -567,7 +567,10 @@
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
               </svg>
               <svg id="scanToggleIconOff" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/><path d="M2 2l20 20"/>
+                <path d="M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h2l1.2-1.8"/>
+                <circle cx="10" cy="14.5" r="3"/>
+                <rect x="14.5" y="6" width="7" height="6" rx="1.4"/>
+                <path d="M16 6V4.3a1.7 1.7 0 0 1 3.4 0V6"/>
               </svg>
             </div>
           </div>
@@ -687,12 +690,16 @@
           <div class="cam-permission-note" id="camNote">Camera live — point at the barcode</div>
           <div id="torchBtn" onclick="event.stopPropagation(); toggleTorch();"
             style="display:none;position:absolute;top:14px;left:16px;z-index:6;width:30px;height:30px;border-radius:50%;background:rgba(240,180,41,0.15);border:1px solid rgba(240,180,41,0.35);align-items:center;justify-content:center;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0B429" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            <svg id="torchIconOff" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0B429" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            <svg id="torchIconOn" style="display:none;" width="14" height="14" viewBox="0 0 24 24" fill="#F0B429" stroke="#F0B429" stroke-width="1"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
           </div>
 
           <div id="scannerOffOverlay" style="display:none;position:absolute;inset:0;z-index:9;background:var(--surface);flex-direction:column;align-items:center;justify-content:center;gap:10px;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.6">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/><path d="M2 2l20 20"/>
+              <path d="M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h2l1.2-1.8"/>
+              <circle cx="10" cy="14.5" r="3"/>
+              <rect x="14.5" y="6" width="7" height="6" rx="1.4"/>
+              <path d="M16 6V4.3a1.7 1.7 0 0 1 3.4 0V6"/>
             </svg>
             <span id="scannerOffText" style="font-size:12.5px;color:var(--text-dim);font-weight:600;">Scanner off — tap to reactivate</span>
           </div>
@@ -1076,12 +1083,25 @@
         btn.style.display = 'flex';
       }
     } catch(e) { /* torch not supported, ignore */ }
+    updateTorchButton();
+  }
+
+  function updateTorchButton(){
+    const btn = document.getElementById('torchBtn');
+    const iconOff = document.getElementById('torchIconOff');
+    const iconOn = document.getElementById('torchIconOn');
+    if(!btn) return;
+    iconOff.style.display = torchOn ? 'none' : 'block';
+    iconOn.style.display = torchOn ? 'block' : 'none';
+    btn.style.background = torchOn ? 'rgba(240,180,41,0.85)' : 'rgba(240,180,41,0.15)';
+    btn.style.borderColor = torchOn ? '#F0B429' : 'rgba(240,180,41,0.35)';
   }
 
   function toggleTorch(){
     if(!torchTrack) return;
     torchOn = !torchOn;
     torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(() => {});
+    updateTorchButton();
   }
 
   function triggerPhotoUpload(){
