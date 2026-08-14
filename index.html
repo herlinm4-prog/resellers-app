@@ -187,7 +187,9 @@
   .scan-card.camera-active .cam-tint{ display:block; }
   .scan-card.camera-active .scan-frame{ z-index:3; }
   .scan-card.camera-active .scan-caption,
-  .scan-card.camera-active .shutter-hint{ z-index:6; }
+  .scan-card.camera-active .shutter-hint,
+  .scan-card.camera-active #uploadPhotoBtn{ z-index:6; }
+  .scan-card.camera-active #uploadPhotoBtn{ display:none; }
 
   .manual-fallback{
     position:absolute; left:16px; right:16px; bottom:16px; z-index:8;
@@ -480,6 +482,15 @@
           </div>
           <div class="scan-caption">Point at the barcode on the tag</div>
 
+          <div id="uploadPhotoBtn" onclick="event.stopPropagation(); triggerPhotoUpload();"
+            style="position:absolute;bottom:16px;right:16px;z-index:6;display:flex;align-items:center;gap:6px;background:rgba(18,23,29,0.85);border:1px solid var(--stroke);border-radius:20px;padding:7px 12px;backdrop-filter:blur(6px);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2">
+              <rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+            </svg>
+            <span style="font-size:11px;font-weight:600;color:var(--text-dim);">Upload photo</span>
+          </div>
+          <input type="file" id="photoInput" accept="image/*" style="display:none;">
+
           <div class="manual-fallback" id="manualFallback" onclick="event.stopPropagation()">
             <input id="manualInput" class="mono" type="text" inputmode="numeric" placeholder="Enter the barcode…">
             <button onclick="submitManual()">Search</button>
@@ -766,6 +777,63 @@
     torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(() => {});
   }
 
+  function triggerPhotoUpload(){
+    if(scanned) return;
+    document.getElementById('photoInput').click();
+  }
+
+  document.getElementById('photoInput').addEventListener('change', function(e){
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // allow picking the same file again later
+    if(!file || scanned) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt){ decodePhoto(evt.target.result); };
+    reader.onerror = function(){
+      showManualFallback('Couldn\'t read that photo. Type the code instead:');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function decodePhoto(dataUrl){
+    if(typeof Quagga === 'undefined'){
+      showManualFallback('Couldn\'t load the scanner. Type the code instead:');
+      return;
+    }
+
+    // Stop any live camera session first — decodeSingle runs independently.
+    if(quaggaRunning) stopQuagga();
+    clearTimeout(fallbackTimer);
+
+    document.getElementById('shutterHint').style.display = 'none';
+    document.getElementById('camNote').classList.remove('show');
+    document.getElementById('manualFallback').classList.remove('show');
+    const analyzing = document.getElementById('analyzing');
+    const analyzingText = document.querySelector('#analyzing .analyzing-text');
+    analyzingText.textContent = 'Reading barcode from photo…';
+    analyzing.classList.add('show');
+
+    Quagga.decodeSingle({
+      src: dataUrl,
+      numOfWorkers: 0,
+      inputStream: { size: 1600 },
+      locator: { patchSize: 'medium', halfSample: true },
+      decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'] }
+    }, function(result){
+      const code = result && result.codeResult ? result.codeResult.code : null;
+      if(scanned) return;
+
+      if(!code){
+        analyzing.classList.remove('show');
+        showManualFallback('No barcode found in that photo. Type the code instead:');
+        return;
+      }
+
+      scanned = true;
+      proceedWithCode(code);
+    });
+  }
+
   function showManualFallback(message){
     if(scanned) return;
     clearTimeout(fallbackTimer);
@@ -876,6 +944,7 @@
     document.getElementById('scannerContainer').style.display = 'block';
     document.getElementById('shutterHint').style.display = 'block';
     document.getElementById('shutterHint').textContent = 'Tap to scan';
+    document.getElementById('uploadPhotoBtn').style.display = 'flex';
     document.getElementById('screen').scrollTo({ top: 0, behavior: 'smooth' });
 
     const marker = document.getElementById('gaugeMarker');
@@ -886,6 +955,7 @@
 
   function proceedWithCode(code){
     document.getElementById('camNote').classList.remove('show');
+    document.getElementById('uploadPhotoBtn').style.display = 'none';
     document.getElementById('scannedCode').textContent = code;
     document.getElementById('analyzing').classList.add('show');
     document.getElementById('notFound').style.display = 'none';
