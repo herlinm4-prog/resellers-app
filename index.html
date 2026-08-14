@@ -33,6 +33,42 @@
     --coral:#FF6859;
   }
 
+  html.theme-light{
+    --ink:#F5F7F9;
+    --surface:#FFFFFF;
+    --surface-2:#EEF1F4;
+    --surface-3:#E4E8EC;
+    --stroke:#DDE2E7;
+    --stroke-soft:#E8EBEE;
+    --text:#12171D;
+    --text-dim:#5B6470;
+    --text-faint:#8993A1;
+    --mint:#0FA678;
+    --mint-dim:#DDF5EC;
+    --gold:#B7790F;
+    --gold-dim:#FBEED0;
+    --coral:#E24334;
+  }
+
+  @media (prefers-color-scheme: light){
+    html.theme-auto{
+      --ink:#F5F7F9;
+      --surface:#FFFFFF;
+      --surface-2:#EEF1F4;
+      --surface-3:#E4E8EC;
+      --stroke:#DDE2E7;
+      --stroke-soft:#E8EBEE;
+      --text:#12171D;
+      --text-dim:#5B6470;
+      --text-faint:#8993A1;
+      --mint:#0FA678;
+      --mint-dim:#DDF5EC;
+      --gold:#B7790F;
+      --gold-dim:#FBEED0;
+      --coral:#E24334;
+    }
+  }
+
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
 
   html,body{
@@ -229,6 +265,15 @@
     font-family:'Space Grotesk', sans-serif;
   }
   .history-tab.active{
+    background:var(--mint-dim); border-color:var(--mint); color:var(--mint);
+  }
+  .settings-seg{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+    border:1px solid var(--stroke); background:var(--surface); color:var(--text-dim);
+    font-size:12.5px; font-weight:600; padding:11px 8px; border-radius:12px;
+    font-family:'Space Grotesk', sans-serif;
+  }
+  .settings-seg.active{
     background:var(--mint-dim); border-color:var(--mint); color:var(--mint);
   }
   .cam-permission-note{
@@ -477,6 +522,17 @@
     *{ transition-duration:0.01ms !important; }
   }
 </style>
+<script>
+  (function(){
+    try {
+      var settings = JSON.parse(localStorage.getItem('resellers_settings')) || {};
+      var theme = settings.theme || 'dark';
+      document.documentElement.classList.add('theme-' + theme);
+    } catch(e) {
+      document.documentElement.classList.add('theme-dark');
+    }
+  })();
+</script>
 </head>
 <body>
 
@@ -505,6 +561,16 @@
           <div class="brand-name">Re<span>sellers</span></div>
         </div>
         <div style="display:flex;align-items:center;gap:14px;">
+          <div onclick="toggleScanner()" style="display:flex;align-items:center;cursor:pointer;">
+            <div class="icon-btn" id="scanToggleBtn">
+              <svg id="scanToggleIconOn" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+              </svg>
+              <svg id="scanToggleIconOff" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/><path d="M2 2l20 20"/>
+              </svg>
+            </div>
+          </div>
           <div onclick="openSettings()" style="display:flex;align-items:center;cursor:pointer;">
             <div class="icon-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -513,7 +579,7 @@
             </div>
           </div>
           <div onclick="openHistory()" style="display:flex;align-items:center;gap:7px;cursor:pointer;">
-            <span style="font-size:12px;font-weight:600;color:var(--text-dim);">History</span>
+            <span id="historyNavLabel" style="font-size:12px;font-weight:600;color:var(--text-dim);">History</span>
             <div class="icon-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>
@@ -525,7 +591,7 @@
 
       <div id="settingsPanel" style="display:none;position:absolute;inset:0;z-index:50;background:var(--ink);flex-direction:column;">
         <div class="app-header">
-          <div class="brand-name">Settings</div>
+          <div class="brand-name" id="settingsPanelTitle">Settings</div>
           <div class="icon-btn" onclick="closeSettings()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6 6 18M6 6l12 12"/>
@@ -534,32 +600,69 @@
         </div>
         <div style="flex:1;overflow-y:auto;padding:6px 20px 30px;">
 
-          <div class="section-label" style="margin-top:10px;">Marketplace</div>
+          <div class="section-label" id="lblMarketplace" style="margin-top:10px;">Marketplace</div>
           <div style="background:var(--surface);border:1px solid var(--stroke);border-radius:16px;padding:13px 15px;font-size:13.5px;color:var(--text-dim);">
             eBay — United States (more marketplaces coming soon)
           </div>
 
-          <div class="section-label">Average shipping cost you pay</div>
+          <div class="section-label" id="lblShipping">Average shipping cost you pay</div>
           <input id="settingShipping" class="mono" type="text" inputmode="decimal" placeholder="6.00"
             style="width:100%;background:var(--surface);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:12px 13px;font-size:15px;">
-          <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.4;">Used to calculate net profit on every scan, along with eBay's ~13% selling fee.</div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.4;">Used as a fallback when eBay doesn't return real shipping data for a search, along with eBay's ~13% selling fee.</div>
 
-          <div class="section-label">Minimum ROI you'll accept</div>
+          <div class="section-label" id="lblMinRoi">Minimum ROI you'll accept</div>
           <input id="settingMinRoi" class="mono" type="text" inputmode="numeric" placeholder="20"
             style="width:100%;background:var(--surface);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:12px 13px;font-size:15px;">
           <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.4;">Deals below this ROI% are downgraded to "Consider" even if profit is positive.</div>
 
-          <button onclick="saveSettings()"
+          <div class="section-label" id="lblLanguage">Language</div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="settings-seg" id="langEn" onclick="setSettingLanguage('en')">English</button>
+            <button type="button" class="settings-seg" id="langEs" onclick="setSettingLanguage('es')">Español</button>
+          </div>
+
+          <div class="section-label" id="lblAppearance">Appearance</div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="settings-seg" id="themeLight" onclick="setSettingTheme('light')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+              Light
+            </button>
+            <button type="button" class="settings-seg" id="themeDark" onclick="setSettingTheme('dark')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+              Dark
+            </button>
+            <button type="button" class="settings-seg" id="themeAuto" onclick="setSettingTheme('auto')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              Auto
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.4;">Auto follows your iPhone's system setting.</div>
+
+          <button onclick="saveSettings()" id="btnSaveSettings"
             style="width:100%;margin-top:26px;border:none;background:linear-gradient(135deg, var(--mint), #1FCB93);color:#062017;border-radius:14px;padding:14px;font-family:'Space Grotesk',sans-serif;font-size:14.5px;font-weight:700;">
             Save settings
           </button>
           <div id="settingsSavedNote" style="display:none;text-align:center;margin-top:10px;font-size:12px;color:var(--mint);font-weight:600;">Saved ✓</div>
+
+          <div class="section-label">Data</div>
+          <button onclick="clearAllData()" id="btnClearData"
+            style="width:100%;border:1px solid var(--coral);background:transparent;color:var(--coral);border-radius:14px;padding:13px;font-family:'Space Grotesk',sans-serif;font-size:13.5px;font-weight:700;">
+            Clear scan history &amp; saved data
+          </button>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.4;">Removes Scanned, Saved and Purchased history from this iPhone. Your settings stay as they are.</div>
+
+          <div class="section-label">About</div>
+          <div style="background:var(--surface);border:1px solid var(--stroke);border-radius:16px;padding:15px;text-align:center;">
+            <div style="font-size:14px;font-weight:700;">Resellers <span id="aboutVersion" style="color:var(--text-faint);font-weight:600;"></span></div>
+            <div style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">By HGRAND Developer</div>
+          </div>
+
         </div>
       </div>
 
       <div id="historyPanel" style="display:none;position:absolute;inset:0;z-index:50;background:var(--ink);flex-direction:column;">
         <div class="app-header">
-          <div class="brand-name">History</div>
+          <div class="brand-name" id="historyPanelTitle">History</div>
           <div class="icon-btn" onclick="closeHistory()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6 6 18M6 6l12 12"/>
@@ -587,26 +690,33 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0B429" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
           </div>
 
+          <div id="scannerOffOverlay" style="display:none;position:absolute;inset:0;z-index:9;background:var(--surface);flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="1.6">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/><path d="M2 2l20 20"/>
+            </svg>
+            <span id="scannerOffText" style="font-size:12.5px;color:var(--text-dim);font-weight:600;">Scanner off — tap to reactivate</span>
+          </div>
+
           <div class="scan-frame">
             <div class="corner tl"></div><div class="corner tr"></div>
             <div class="corner bl"></div><div class="corner br"></div>
             <div class="scan-line"></div>
           </div>
-          <div class="scan-caption">Point at the barcode on the tag</div>
+          <div class="scan-caption" id="scanCaptionText">Point at the barcode on the tag</div>
 
           <div id="uploadPhotoBtn" onclick="event.stopPropagation(); triggerPhotoUpload();"
             style="position:absolute;bottom:16px;right:16px;z-index:6;display:flex;align-items:center;gap:6px;background:rgba(18,23,29,0.85);border:1px solid var(--stroke);border-radius:20px;padding:7px 12px;backdrop-filter:blur(6px);">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2">
               <rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
             </svg>
-            <span style="font-size:11px;font-weight:600;color:var(--text-dim);">Upload photo</span>
+            <span id="uploadPhotoLabel" style="font-size:11px;font-weight:600;color:var(--text-dim);">Upload photo</span>
           </div>
           <div id="searchByNameBtn" onclick="event.stopPropagation(); openManualSearch('query');"
             style="position:absolute;bottom:16px;left:16px;z-index:6;display:flex;align-items:center;gap:6px;background:rgba(18,23,29,0.85);border:1px solid var(--stroke);border-radius:20px;padding:7px 12px;backdrop-filter:blur(6px);">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2">
               <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
             </svg>
-            <span style="font-size:11px;font-weight:600;color:var(--text-dim);">Search by name</span>
+            <span id="searchByNameLabel" style="font-size:11px;font-weight:600;color:var(--text-dim);">Search by name</span>
           </div>
           <input type="file" id="photoInput" accept="image/*" style="display:none;">
 
@@ -652,10 +762,11 @@
                 <div class="metric-value" id="decRoi">0%</div>
               </div>
             </div>
-            <div class="refs-count" id="refsCountTop" style="padding:0 18px 14px;margin-top:-6px;">— references analyzed</div>
+            <div class="refs-count" id="refsCountTop" style="padding:0 18px 4px;margin-top:-6px;">— references analyzed</div>
+            <div class="refs-count" id="shippingSourceNote" style="padding:0 18px 14px;margin-top:-8px;font-size:10.5px;color:var(--text-faint);">—</div>
 
             <div class="cost-entry-row">
-              <div class="price-label" style="margin-bottom:7px;">Cost</div>
+              <div class="price-label" id="lblCost" style="margin-bottom:7px;">Cost</div>
               <input id="costInputResult" class="mono" type="text" inputmode="decimal" placeholder="$0.00" oninput="recomputeDecision()"
                 style="width:100%;background:var(--surface-2);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:12px 13px;font-size:15px;">
               <div class="quick-cost-row">
@@ -665,7 +776,7 @@
                 <button class="quick-cost-btn" onclick="setQuickCost(14.99)">$14.99</button>
               </div>
 
-              <div class="price-label" style="margin:14px 0 7px;">Store (optional)</div>
+              <div class="price-label" id="lblStore" style="margin:14px 0 7px;">Store (optional)</div>
               <input id="storeInputResult" class="mono" type="text" placeholder="e.g. Ross, Burlington, Goodwill" oninput="saveLastStore()"
                 style="width:100%;background:var(--surface-2);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:11px 13px;font-size:13.5px;">
 
@@ -695,7 +806,7 @@
             <div class="product-info">
               <div class="product-name" id="productName">—</div>
               <div class="product-meta">Scanned code <span class="mono" id="scannedCode">—</span></div>
-              <div onclick="wrongProduct()" style="margin-top:5px;font-size:11px;font-weight:600;color:var(--gold);cursor:pointer;display:inline-block;">Wrong product? Fix it →</div>
+              <div onclick="wrongProduct()" id="wrongProductLink" style="margin-top:5px;font-size:11px;font-weight:600;color:var(--gold);cursor:pointer;display:inline-block;">Wrong product? Fix it →</div>
             </div>
             <div class="badge-found">✓ Read</div>
           </div>
@@ -785,7 +896,7 @@
       <div style="display:flex;gap:10px;">
         <button onclick="skipItem()"
           style="flex:0.85;border:1px solid var(--stroke);background:var(--surface-2);color:var(--text-dim);border-radius:16px;padding:16px 10px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;">
-          Skip
+          <span id="ctaSkipLabel">Skip</span>
         </button>
         <button onclick="buyItem()" class="cta-btn" style="flex:1;">
           <span id="ctaLabel">Buy — Next scan</span>
@@ -803,6 +914,7 @@
   let quaggaRunning = false;
   let fallbackTimer = null;
   let cameraPermissionGranted = (localStorage.getItem('resellers_cam_ok') === '1');
+  let scannerDeactivated = false; // true only after an explicit "Deactivate scan" tap
 
   function countUp(el, target, prefix, duration){
     const start = performance.now();
@@ -817,6 +929,8 @@
 
   function startScanner(){
     if(scanned || quaggaRunning) return;
+    scannerDeactivated = false;
+    updateScanToggleButton();
 
     if(cameraPermissionGranted){
       initQuagga();
@@ -824,7 +938,7 @@
     }
 
     const hint = document.getElementById('shutterHint');
-    hint.textContent = 'Requesting camera…';
+    hint.textContent = loadSettings().language === 'es' ? 'Solicitando cámara…' : 'Requesting camera…';
 
     if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
       showManualFallback('This browser can\'t access the camera here.');
@@ -902,6 +1016,7 @@
       document.getElementById('shutterHint').style.display = 'none';
       document.getElementById('camNote').classList.add('show');
       setupTorchButton();
+      updateScanToggleButton();
 
       fallbackTimer = setTimeout(() => {
         if(!scanned) showManualFallback('Not detecting? Type the code instead:');
@@ -938,7 +1053,9 @@
 
     scanned = true;
     clearTimeout(fallbackTimer);
-    stopQuagga();
+    // Intentionally NOT stopping Quagga/the camera here. It keeps running in
+    // the background so the next scan is instant, with zero repeated
+    // permission prompts. Only "Deactivate scan" truly stops the camera.
     proceedWithCode(code);
   }
 
@@ -1062,7 +1179,6 @@
     if(!val || scanned) return;
     scanned = true;
     clearTimeout(fallbackTimer);
-    stopQuagga();
     document.getElementById('manualFallback').classList.remove('show');
     if(manualMode === 'query'){
       proceedWithQuery(val);
@@ -1077,16 +1193,15 @@
     scanned = false;
     clearTimeout(fallbackTimer);
     clearTimeout(initGuardTimer);
-    stopQuagga();
     document.getElementById('result').classList.remove('visible');
     document.getElementById('ctaBar').classList.remove('visible');
     document.getElementById('notFound').style.display = 'none';
-    document.getElementById('scannerContainer').style.display = 'block';
+    document.getElementById('scanCard').style.display = 'flex';
     document.getElementById('shutterHint').style.display = 'none';
     document.getElementById('uploadPhotoBtn').style.display = 'none';
     document.getElementById('searchByNameBtn').style.display = 'none';
     document.getElementById('detailsSection').style.display = 'none';
-    document.getElementById('detailsToggleLabel').textContent = 'View details';
+    document.getElementById('detailsToggleLabel').textContent = t().viewDetails;
     document.getElementById('detailsChevron').style.transform = 'rotate(0deg)';
 
     setManualMode('query');
@@ -1101,8 +1216,10 @@
 
   const BACKEND_URL = 'https://reseller-backend-9exp.onrender.com';
 
+  const APP_VERSION = 'v1.4.0';
+
   const SETTINGS_KEY = 'resellers_settings';
-  const SETTINGS_DEFAULTS = { shipping: 6, minRoi: 20 };
+  const SETTINGS_DEFAULTS = { shipping: 6, minRoi: 20, theme: 'dark', language: 'en' };
 
   function loadSettings(){
     try {
@@ -1112,11 +1229,19 @@
     }
   }
 
+  function persistSettingsPatch(patch){
+    const current = loadSettings();
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(Object.assign(current, patch)));
+  }
+
   function openSettings(){
     const s = loadSettings();
     document.getElementById('settingShipping').value = s.shipping;
     document.getElementById('settingMinRoi').value = s.minRoi;
     document.getElementById('settingsSavedNote').style.display = 'none';
+    document.getElementById('aboutVersion').textContent = APP_VERSION;
+    reflectThemeButtons(s.theme);
+    reflectLanguageButtons(s.language);
     document.getElementById('settingsPanel').style.display = 'flex';
   }
 
@@ -1127,12 +1252,143 @@
   function saveSettings(){
     const shipping = parseFloat(document.getElementById('settingShipping').value);
     const minRoi = parseFloat(document.getElementById('settingMinRoi').value);
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+    persistSettingsPatch({
       shipping: Number.isFinite(shipping) ? shipping : SETTINGS_DEFAULTS.shipping,
       minRoi: Number.isFinite(minRoi) ? minRoi : SETTINGS_DEFAULTS.minRoi
-    }));
+    });
     document.getElementById('settingsSavedNote').style.display = 'block';
     if(lastScanData) recomputeDecision(); // reflect the new numbers immediately if a result is on screen
+  }
+
+  // Theme and language apply instantly, the way iOS Settings itself behaves —
+  // no need to hit "Save" first.
+  function reflectThemeButtons(theme){
+    document.getElementById('themeLight').classList.toggle('active', theme === 'light');
+    document.getElementById('themeDark').classList.toggle('active', theme === 'dark');
+    document.getElementById('themeAuto').classList.toggle('active', theme === 'auto');
+  }
+
+  function setSettingTheme(theme){
+    document.documentElement.classList.remove('theme-light', 'theme-dark', 'theme-auto');
+    document.documentElement.classList.add('theme-' + theme);
+    persistSettingsPatch({ theme });
+    reflectThemeButtons(theme);
+  }
+
+  function reflectLanguageButtons(lang){
+    document.getElementById('langEn').classList.toggle('active', lang === 'en');
+    document.getElementById('langEs').classList.toggle('active', lang === 'es');
+  }
+
+  function setSettingLanguage(lang){
+    persistSettingsPatch({ language: lang });
+    reflectLanguageButtons(lang);
+    applyLanguage();
+  }
+
+  function clearAllData(){
+    if(!confirm('This removes your Scanned, Saved and Purchased history from this iPhone. Continue?')) return;
+    localStorage.removeItem(HISTORY_KEY);
+    localStorage.removeItem(SAVED_KEY);
+    localStorage.removeItem(PURCHASED_KEY);
+    if(document.getElementById('historyPanel').style.display === 'flex'){
+      renderHistoryList();
+    }
+  }
+
+  // --- Lightweight language support ---------------------------------------
+  // Covers the app's own UI chrome. Product titles and eBay data always come
+  // back from eBay/UPC lookups in English regardless of this setting.
+  const I18N = {
+    en: {
+      history: 'History', settings: 'Settings',
+      scanCaption: 'Point at the barcode on the tag',
+      camLive: 'Camera live — point at the barcode',
+      uploadPhoto: 'Upload photo', searchByName: 'Search by name',
+      cost: 'Cost', store: 'Store (optional)',
+      saveOpportunity: 'Save opportunity', savedCheck: 'Saved ✓',
+      viewDetails: 'View details', hideDetails: 'Hide details',
+      wrongProduct: 'Wrong product? Fix it →',
+      skip: 'Skip', buyNext: 'Buy — Next scan',
+      marketplace: 'Marketplace', shippingLbl: 'Average shipping cost you pay',
+      minRoiLbl: "Minimum ROI you'll accept", language: 'Language', appearance: 'Appearance',
+      saveSettings: 'Save settings', clearData: 'Clear scan history & saved data',
+      barcode: 'Barcode', productName: 'Product name',
+      addCostToSee: 'ADD COST TO SEE DECISION',
+      buyGoodDeal: 'BUY — GOOD DEAL', consider: 'CONSIDER',
+      avoidLosing: 'AVOID — LOSING MONEY', marginalLow: 'MARGINAL — LOW SCORE',
+      considerBelowRoi: (r) => `CONSIDER — BELOW YOUR ${r}% MIN ROI`,
+      deactivateScan: 'Deactivate scan', activateScan: 'Activate scan',
+      scannerOff: 'Scanner off — tap to reactivate',
+      histEmptyScanned: 'No scans yet — your history will show up here.',
+      histEmptySaved: 'No saved opportunities yet — tap "Save opportunity" on a result to keep it for later.',
+      histEmptyPurchased: 'No purchases logged yet — tap "Buy" on a result to log it here.',
+      tabScanned: 'Scanned', tabSaved: 'Saved', tabPurchased: 'Purchased',
+      tapToScan: 'Tap to scan'
+    },
+    es: {
+      history: 'Historial', settings: 'Ajustes',
+      scanCaption: 'Apunta al código de barras',
+      camLive: 'Cámara activa — apunta al código',
+      uploadPhoto: 'Subir foto', searchByName: 'Buscar por nombre',
+      cost: 'Costo', store: 'Tienda (opcional)',
+      saveOpportunity: 'Guardar oportunidad', savedCheck: 'Guardado ✓',
+      viewDetails: 'Ver detalles', hideDetails: 'Ocultar detalles',
+      wrongProduct: '¿Producto incorrecto? Corregir →',
+      skip: 'Omitir', buyNext: 'Comprar — Siguiente',
+      marketplace: 'Mercado', shippingLbl: 'Costo de envío promedio que pagas',
+      minRoiLbl: 'ROI mínimo que aceptas', language: 'Idioma', appearance: 'Apariencia',
+      saveSettings: 'Guardar ajustes', clearData: 'Borrar historial y datos guardados',
+      barcode: 'Código', productName: 'Nombre del producto',
+      addCostToSee: 'AGREGA EL COSTO PARA VER LA DECISIÓN',
+      buyGoodDeal: 'COMPRAR — BUENA OFERTA', consider: 'CONSIDERAR',
+      avoidLosing: 'EVITAR — PÉRDIDA', marginalLow: 'MARGINAL — PUNTAJE BAJO',
+      considerBelowRoi: (r) => `CONSIDERAR — DEBAJO DE TU ROI MÍN. DE ${r}%`,
+      deactivateScan: 'Desactivar escáner', activateScan: 'Activar escáner',
+      scannerOff: 'Escáner apagado — toca para reactivar',
+      histEmptyScanned: 'Aún no hay escaneos — tu historial aparecerá aquí.',
+      histEmptySaved: 'Aún no hay oportunidades guardadas — toca "Guardar oportunidad" en un resultado para verlo después.',
+      histEmptyPurchased: 'Aún no hay compras registradas — toca "Comprar" en un resultado para registrarlo aquí.',
+      tabScanned: 'Escaneados', tabSaved: 'Guardados', tabPurchased: 'Comprados',
+      tapToScan: 'Toca para escanear'
+    }
+  };
+
+  function t(){
+    return I18N[loadSettings().language] || I18N.en;
+  }
+
+  function applyLanguage(){
+    const s = t();
+    document.getElementById('historyNavLabel').textContent = s.history;
+    document.getElementById('historyPanelTitle').textContent = s.history;
+    document.getElementById('settingsPanelTitle').textContent = s.settings;
+    document.getElementById('scanCaptionText').textContent = s.scanCaption;
+    document.getElementById('camNote').textContent = s.camLive;
+    document.getElementById('uploadPhotoLabel').textContent = s.uploadPhoto;
+    document.getElementById('searchByNameLabel').textContent = s.searchByName;
+    document.getElementById('lblCost').textContent = s.cost;
+    document.getElementById('lblStore').textContent = s.store;
+    document.getElementById('wrongProductLink').textContent = s.wrongProduct;
+    document.getElementById('lblMarketplace').textContent = s.marketplace;
+    document.getElementById('lblShipping').textContent = s.shippingLbl;
+    document.getElementById('lblMinRoi').textContent = s.minRoiLbl;
+    document.getElementById('lblLanguage').textContent = s.language;
+    document.getElementById('lblAppearance').textContent = s.appearance;
+    document.getElementById('btnSaveSettings').textContent = s.saveSettings;
+    document.getElementById('btnClearData').textContent = s.clearData;
+    document.getElementById('tabBarcode').textContent = s.barcode;
+    document.getElementById('tabQuery').textContent = s.productName;
+    document.getElementById('histTabScanned').textContent = s.tabScanned;
+    document.getElementById('histTabSaved').textContent = s.tabSaved;
+    document.getElementById('histTabPurchased').textContent = s.tabPurchased;
+    document.getElementById('saveOppLabel').textContent = s.saveOpportunity;
+    document.getElementById('ctaSkipLabel').textContent = s.skip;
+    document.getElementById('ctaLabel').textContent = s.buyNext;
+    if(!scanned){
+      document.getElementById('shutterHint').textContent = s.tapToScan;
+    }
+    updateScanToggleButton();
   }
 
   const HISTORY_KEY = 'resellers_history';
@@ -1180,7 +1436,7 @@
     const raw = document.getElementById('costInputResult').value.trim();
     const cost = raw ? Number(raw) : null;
     const store = document.getElementById('storeInputResult').value.trim();
-    const d = computeDecision(lastScanData.suggested, cost, lastScanData.referenceCount);
+    const d = computeDecision(lastScanData.suggested, cost, lastScanData.referenceCount, lastScanData.avgShipping);
 
     return {
       code,
@@ -1205,8 +1461,8 @@
     localStorage.setItem(SAVED_KEY, JSON.stringify(saved.slice(0, 100)));
 
     const label = document.getElementById('saveOppLabel');
-    label.textContent = 'Saved ✓';
-    setTimeout(() => { label.textContent = 'Save opportunity'; }, 1500);
+    label.textContent = t().savedCheck;
+    setTimeout(() => { label.textContent = t().saveOpportunity; }, 1500);
   }
 
   function recordPurchase(){
@@ -1235,9 +1491,9 @@
   function renderHistoryList(){
     const list = document.getElementById('historyList');
     const emptyMessages = {
-      scanned: 'No scans yet — your history will show up here.',
-      saved: 'No saved opportunities yet — tap "Save opportunity" on a result to keep it for later.',
-      purchased: 'No purchases logged yet — tap "Buy" on a result to log it here.'
+      scanned: t().histEmptyScanned,
+      saved: t().histEmptySaved,
+      purchased: t().histEmptyPurchased
     };
     const items = historyTab === 'scanned' ? loadHistory()
       : historyTab === 'saved' ? loadList(SAVED_KEY)
@@ -1302,20 +1558,16 @@
     pendingCodeCount = 0;
     clearTimeout(fallbackTimer);
     clearTimeout(initGuardTimer);
-    stopQuagga();
     document.getElementById('manualFallback').classList.remove('show');
-    document.getElementById('camNote').classList.remove('show');
     document.getElementById('result').classList.remove('visible');
     document.getElementById('ctaBar').classList.remove('visible');
     document.getElementById('notFound').style.display = 'none';
-    document.getElementById('scannerContainer').style.display = 'block';
-    document.getElementById('shutterHint').style.display = 'block';
-    document.getElementById('shutterHint').textContent = 'Tap to scan';
+    document.getElementById('scanCard').style.display = 'flex';
     document.getElementById('uploadPhotoBtn').style.display = 'flex';
     document.getElementById('searchByNameBtn').style.display = 'flex';
     setManualMode('barcode');
     document.getElementById('detailsSection').style.display = 'none';
-    document.getElementById('detailsToggleLabel').textContent = 'View details';
+    document.getElementById('detailsToggleLabel').textContent = t().viewDetails;
     document.getElementById('detailsChevron').style.transform = 'rotate(0deg)';
     document.getElementById('screen').scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -1323,15 +1575,28 @@
     const caption = document.getElementById('gaugeCaption');
     marker.classList.remove('show');
     caption.classList.remove('show');
+
+    if(quaggaRunning){
+      // The camera never actually stopped — it's instantly ready again.
+      document.getElementById('shutterHint').style.display = 'none';
+      document.getElementById('camNote').classList.add('show');
+    } else if(!scannerDeactivated){
+      document.getElementById('camNote').classList.remove('show');
+      document.getElementById('shutterHint').style.display = 'block';
+      document.getElementById('shutterHint').textContent = t().tapToScan;
+    }
+    updateScanToggleButton();
   }
 
   // Continuous sourcing flow: Scan -> Result -> Buy/Skip -> Scan Again,
-  // without ever dropping back to a home/dashboard screen. If camera
-  // permission is already granted, the camera resumes automatically.
+  // without ever dropping back to a home/dashboard screen. The camera keeps
+  // running continuously in the background between scans, so this never
+  // re-requests permission and never re-initializes the feed — unless the
+  // camera was explicitly deactivated, in which case we respect that choice.
   function nextScan(){
     rescan();
-    if(cameraPermissionGranted){
-      startScanner();
+    if(cameraPermissionGranted && !scannerDeactivated){
+      startScanner(); // no-op if the camera is already running
     }
   }
 
@@ -1344,13 +1609,55 @@
     nextScan();
   }
 
+  // --- Deactivate / activate scan -----------------------------------------
+  // The camera runs permanently once granted. This is the ONLY way to
+  // actually stop it — for reviewing history/settings, saving battery, etc.
+  function deactivateScan(){
+    stopQuagga();
+    scannerDeactivated = true;
+    clearTimeout(fallbackTimer);
+    clearTimeout(initGuardTimer);
+    document.getElementById('shutterHint').style.display = 'none';
+    document.getElementById('camNote').classList.remove('show');
+    updateScanToggleButton();
+  }
+
+  function activateScan(){
+    scannerDeactivated = false;
+    updateScanToggleButton();
+    if(!scanned){
+      startScanner();
+    }
+  }
+
+  function toggleScanner(){
+    if(scannerDeactivated){
+      activateScan();
+    } else {
+      deactivateScan();
+    }
+  }
+
+  function updateScanToggleButton(){
+    const onIcon = document.getElementById('scanToggleIconOn');
+    const offIcon = document.getElementById('scanToggleIconOff');
+    const overlay = document.getElementById('scannerOffOverlay');
+    const overlayText = document.getElementById('scannerOffText');
+    if(!onIcon) return; // not yet rendered on first paint
+
+    onIcon.style.display = scannerDeactivated ? 'none' : 'block';
+    offIcon.style.display = scannerDeactivated ? 'block' : 'none';
+    overlay.style.display = (scannerDeactivated && !scanned) ? 'flex' : 'none';
+    overlayText.textContent = t().scannerOff;
+  }
+
   function toggleDetails(){
     const section = document.getElementById('detailsSection');
     const chevron = document.getElementById('detailsChevron');
     const label = document.getElementById('detailsToggleLabel');
     const isOpen = section.style.display !== 'none';
     section.style.display = isOpen ? 'none' : 'block';
-    label.textContent = isOpen ? 'View details' : 'Hide details';
+    label.textContent = isOpen ? t().viewDetails : t().hideDetails;
     chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
   }
 
@@ -1383,7 +1690,7 @@
       .then(data => {
         clearTimeout(wakeupTimer);
         document.getElementById('analyzing').classList.remove('show');
-        document.getElementById('scannerContainer').style.display = 'none';
+        document.getElementById('scanCard').style.display = 'none';
 
         if (!data.found) {
           document.getElementById('notFoundText').textContent = 'No eBay price references found for this product.';
@@ -1397,7 +1704,7 @@
       .catch(err => {
         clearTimeout(wakeupTimer);
         document.getElementById('analyzing').classList.remove('show');
-        document.getElementById('scannerContainer').style.display = 'none';
+        document.getElementById('scanCard').style.display = 'none';
         document.getElementById('notFoundText').textContent =
           'Could not reach the backend after a few tries. Check your connection and scan again.';
         document.getElementById('notFound').style.display = 'block';
@@ -1469,7 +1776,10 @@
     document.getElementById('sourceNote').textContent =
       data.dataSource === 'sold_confirmed'
         ? 'Prices come from confirmed eBay sales.'
-        : "Prices come from eBay's live Browse API (active listings, not confirmed sales).";
+        : "Prices come from eBay's live Browse API (active listings, not confirmed sales)." +
+          (data.listingMix === 'fixed_price_only'
+            ? ' Auction listings were excluded to avoid unreliable low comps.'
+            : ' Sample was too small to exclude auctions, so a few may be included.');
 
     countUp(document.getElementById('valMin'), min, '$', 700);
     countUp(document.getElementById('valAvg'), avg, '$', 900);
@@ -1518,12 +1828,16 @@
 
   const EBAY_FEE_RATE = 0.13;
 
-  function computeDecision(suggested, cost, referenceCount){
+  function computeDecision(suggested, cost, referenceCount, avgShipping){
     if(cost == null || Number.isNaN(cost)){
       return { hasCost:false };
     }
     const settings = loadSettings();
-    const shipping = settings.shipping;
+    // Real shipping cost pulled from comparable eBay listings beats a flat
+    // guess — only fall back to the Settings estimate when eBay gave us no
+    // shipping data for this search.
+    const shipping = avgShipping != null ? avgShipping : settings.shipping;
+    const shippingIsReal = avgShipping != null;
     const minRoi = settings.minRoi;
 
     const netProfit = +(suggested - cost - (suggested * EBAY_FEE_RATE) - shipping).toFixed(2);
@@ -1548,35 +1862,36 @@
 
     let decision, label, cls;
     if(netProfit <= 0){
-      decision = 'avoid'; label = 'AVOID — LOSING MONEY'; cls = 'avoid';
+      decision = 'avoid'; label = t().avoidLosing; cls = 'avoid';
     } else if(score >= 75){
-      decision = 'buy'; label = 'BUY — GOOD DEAL'; cls = 'buy';
+      decision = 'buy'; label = t().buyGoodDeal; cls = 'buy';
     } else if(score >= 50){
-      decision = 'consider'; label = 'CONSIDER'; cls = 'consider';
+      decision = 'consider'; label = t().consider; cls = 'consider';
     } else {
-      decision = 'marginal'; label = 'MARGINAL — LOW SCORE'; cls = 'avoid';
+      decision = 'marginal'; label = t().marginalLow; cls = 'avoid';
     }
 
     // A deal can score well but still fall short of the reseller's own bar.
     if(decision === 'buy' && roi != null && roi < minRoi){
-      decision = 'consider'; label = `CONSIDER — BELOW YOUR ${minRoi}% MIN ROI`; cls = 'consider';
+      decision = 'consider'; label = t().considerBelowRoi(minRoi); cls = 'consider';
     }
 
-    return { hasCost:true, netProfit, roi, score, decision, label, cls };
+    return { hasCost:true, netProfit, roi, score, decision, label, cls, shipping, shippingIsReal };
   }
 
   function scoreReason(d, referenceCount){
+    const isEs = loadSettings().language === 'es';
     const bits = [];
     if(d.roi != null){
-      if(d.roi >= 100) bits.push('very high ROI');
-      else if(d.roi >= 40) bits.push('solid ROI');
-      else if(d.roi < 20) bits.push('thin ROI');
+      if(d.roi >= 100) bits.push(isEs ? 'ROI muy alto' : 'very high ROI');
+      else if(d.roi >= 40) bits.push(isEs ? 'ROI sólido' : 'solid ROI');
+      else if(d.roi < 20) bits.push(isEs ? 'ROI bajo' : 'thin ROI');
     }
-    if(referenceCount <= 5) bits.push('low competition');
-    else if(referenceCount > 15) bits.push('high competition');
-    else bits.push('moderate competition');
-    if(d.netProfit >= 15) bits.push('strong margin');
-    else if(d.netProfit < 0) bits.push('negative margin');
+    if(referenceCount <= 5) bits.push(isEs ? 'baja competencia' : 'low competition');
+    else if(referenceCount > 15) bits.push(isEs ? 'alta competencia' : 'high competition');
+    else bits.push(isEs ? 'competencia moderada' : 'moderate competition');
+    if(d.netProfit >= 15) bits.push(isEs ? 'margen fuerte' : 'strong margin');
+    else if(d.netProfit < 0) bits.push(isEs ? 'margen negativo' : 'negative margin');
     return bits.length ? bits.join(' · ') : '';
   }
 
@@ -1591,12 +1906,19 @@
 
     if(!d.hasCost){
       banner.classList.add('neutral');
-      label.textContent = 'ADD COST TO SEE DECISION';
+      label.textContent = t().addCostToSee;
       scoreEl.style.display = 'none';
       reasonEl.style.display = 'none';
       metrics.style.display = 'none';
       const marginNoteEmpty = document.getElementById('marginNote');
-      if(marginNoteEmpty) marginNoteEmpty.textContent = 'Add cost to see margin';
+      if(marginNoteEmpty) marginNoteEmpty.textContent = loadSettings().language === 'es' ? 'Agrega el costo para ver el margen' : 'Add cost to see margin';
+      const shipNoteEmpty = document.getElementById('shippingSourceNote');
+      if(shipNoteEmpty && lastScanData){
+        const isEs = loadSettings().language === 'es';
+        shipNoteEmpty.textContent = lastScanData.avgShipping != null
+          ? (isEs ? `Datos de envío disponibles ($${lastScanData.avgShipping.toFixed(2)} prom.)` : `Shipping data available from comps ($${lastScanData.avgShipping.toFixed(2)} avg)`)
+          : (isEs ? 'No se encontraron datos de envío reales para esta búsqueda' : 'No real shipping data found for this search');
+      }
       return;
     }
 
@@ -1617,6 +1939,13 @@
     profitEl.className = 'metric-value ' + (d.netProfit >= 0 ? 'profit-pos' : 'profit-neg');
     document.getElementById('decRoi').textContent = d.roi != null ? `${d.roi}%` : '—';
 
+    const shipNote = document.getElementById('shippingSourceNote');
+    if(shipNote){
+      shipNote.textContent = d.shippingIsReal
+        ? `Shipping est. $${d.shipping.toFixed(2)} — from real comparable listings`
+        : `Shipping est. $${d.shipping.toFixed(2)} — assumed (no shipping data found)`;
+    }
+
     const marginNote = document.getElementById('marginNote');
     if(marginNote){
       marginNote.textContent = `≈ ${d.netProfit >= 0 ? '$' : '-$'}${Math.abs(d.netProfit).toFixed(2)} net margin`;
@@ -1627,7 +1956,7 @@
     if(!lastScanData) return;
     const raw = document.getElementById('costInputResult').value.trim();
     const cost = raw ? Number(raw) : null;
-    const d = computeDecision(lastScanData.suggested, cost, lastScanData.referenceCount);
+    const d = computeDecision(lastScanData.suggested, cost, lastScanData.referenceCount, lastScanData.avgShipping);
     renderDecision(d, cost, lastScanData.suggested, lastScanData.referenceCount);
 
     if(cost != null && !Number.isNaN(cost)){
@@ -1646,6 +1975,16 @@
       const btnValue = parseFloat(btn.textContent.replace('$',''));
       btn.classList.toggle('active', cost != null && Math.abs(btnValue - cost) < 0.001);
     });
+  }
+
+  // --- Startup --------------------------------------------------------------
+  // If the camera was already granted on this iPhone, bring it up
+  // immediately — the scanner should be permanently ready, not waiting for
+  // another tap every time the app is opened.
+  applyLanguage();
+  updateScanToggleButton();
+  if(cameraPermissionGranted){
+    startScanner();
   }
 </script>
 
