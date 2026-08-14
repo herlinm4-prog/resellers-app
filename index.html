@@ -189,11 +189,12 @@
   .scan-card.camera-active .scan-caption,
   .scan-card.camera-active .shutter-hint,
   .scan-card.camera-active #uploadPhotoBtn{ z-index:6; }
-  .scan-card.camera-active #uploadPhotoBtn{ display:none; }
+  .scan-card.camera-active #uploadPhotoBtn,
+  .scan-card.camera-active #searchByNameBtn{ display:none; }
 
   .manual-fallback{
     position:absolute; left:16px; right:16px; bottom:16px; z-index:8;
-    display:none; gap:8px;
+    display:none; gap:8px; flex-wrap:wrap;
     background:rgba(18,23,29,0.92);
     border:1px solid var(--stroke); border-radius:14px;
     padding:10px;
@@ -211,6 +212,15 @@
     border:none; border-radius:10px; padding:0 14px;
     background:var(--mint); color:#062017; font-weight:700; font-size:12.5px;
     font-family:'Space Grotesk', sans-serif;
+  }
+  .manual-mode-tab{
+    flex:1; border:1px solid var(--stroke); background:transparent;
+    color:var(--text-dim); font-size:11px; font-weight:600;
+    padding:7px 6px; border-radius:9px;
+    font-family:'Space Grotesk', sans-serif;
+  }
+  .manual-mode-tab.active{
+    background:var(--mint-dim); border-color:var(--mint); color:var(--mint);
   }
   .cam-permission-note{
     position:absolute; left:16px; right:16px; top:44px; z-index:6;
@@ -485,13 +495,56 @@
           </div>
           <div class="brand-name">Re<span>sellers</span></div>
         </div>
-        <div onclick="openHistory()" style="display:flex;align-items:center;gap:7px;cursor:pointer;">
-          <span style="font-size:12px;font-weight:600;color:var(--text-dim);">History</span>
-          <div class="icon-btn">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div onclick="openSettings()" style="display:flex;align-items:center;cursor:pointer;">
+            <div class="icon-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </div>
+          </div>
+          <div onclick="openHistory()" style="display:flex;align-items:center;gap:7px;cursor:pointer;">
+            <span style="font-size:12px;font-weight:600;color:var(--text-dim);">History</span>
+            <div class="icon-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="settingsPanel" style="display:none;position:absolute;inset:0;z-index:50;background:var(--ink);flex-direction:column;">
+        <div class="app-header">
+          <div class="brand-name">Settings</div>
+          <div class="icon-btn" onclick="closeSettings()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>
+              <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
           </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:6px 20px 30px;">
+
+          <div class="section-label" style="margin-top:10px;">Marketplace</div>
+          <div style="background:var(--surface);border:1px solid var(--stroke);border-radius:16px;padding:13px 15px;font-size:13.5px;color:var(--text-dim);">
+            eBay — United States (more marketplaces coming soon)
+          </div>
+
+          <div class="section-label">Average shipping cost you pay</div>
+          <input id="settingShipping" class="mono" type="text" inputmode="decimal" placeholder="6.00"
+            style="width:100%;background:var(--surface);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:12px 13px;font-size:15px;">
+          <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.4;">Used to calculate net profit on every scan, along with eBay's ~13% selling fee.</div>
+
+          <div class="section-label">Minimum ROI you'll accept</div>
+          <input id="settingMinRoi" class="mono" type="text" inputmode="numeric" placeholder="20"
+            style="width:100%;background:var(--surface);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:12px 13px;font-size:15px;">
+          <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.4;">Deals below this ROI% are downgraded to "Consider" even if profit is positive.</div>
+
+          <button onclick="saveSettings()"
+            style="width:100%;margin-top:26px;border:none;background:linear-gradient(135deg, var(--mint), #1FCB93);color:#062017;border-radius:14px;padding:14px;font-family:'Space Grotesk',sans-serif;font-size:14.5px;font-weight:700;">
+            Save settings
+          </button>
+          <div id="settingsSavedNote" style="display:none;text-align:center;margin-top:10px;font-size:12px;color:var(--mint);font-weight:600;">Saved ✓</div>
         </div>
       </div>
 
@@ -534,9 +587,20 @@
             </svg>
             <span style="font-size:11px;font-weight:600;color:var(--text-dim);">Upload photo</span>
           </div>
+          <div id="searchByNameBtn" onclick="event.stopPropagation(); openManualSearch('query');"
+            style="position:absolute;bottom:16px;left:16px;z-index:6;display:flex;align-items:center;gap:6px;background:rgba(18,23,29,0.85);border:1px solid var(--stroke);border-radius:20px;padding:7px 12px;backdrop-filter:blur(6px);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2">
+              <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            <span style="font-size:11px;font-weight:600;color:var(--text-dim);">Search by name</span>
+          </div>
           <input type="file" id="photoInput" accept="image/*" style="display:none;">
 
           <div class="manual-fallback" id="manualFallback" onclick="event.stopPropagation()">
+            <div id="manualModeTabs" style="display:flex;gap:6px;width:100%;margin-bottom:2px;">
+              <button type="button" class="manual-mode-tab active" id="tabBarcode" onclick="setManualMode('barcode')">Barcode</button>
+              <button type="button" class="manual-mode-tab" id="tabQuery" onclick="setManualMode('query')">Product name</button>
+            </div>
             <input id="manualInput" class="mono" type="text" inputmode="numeric" placeholder="Enter the barcode…">
             <button onclick="submitManual()">Search</button>
           </div>
@@ -607,6 +671,7 @@
             <div class="product-info">
               <div class="product-name" id="productName">—</div>
               <div class="product-meta">Scanned code <span class="mono" id="scannedCode">—</span></div>
+              <div onclick="wrongProduct()" style="margin-top:5px;font-size:11px;font-weight:600;color:var(--gold);cursor:pointer;display:inline-block;">Wrong product? Fix it →</div>
             </div>
             <div class="badge-found">✓ Read</div>
           </div>
@@ -935,6 +1000,28 @@
     });
   }
 
+  let manualMode = 'barcode';
+
+  function setManualMode(mode){
+    manualMode = mode;
+    const input = document.getElementById('manualInput');
+    document.getElementById('tabBarcode').classList.toggle('active', mode === 'barcode');
+    document.getElementById('tabQuery').classList.toggle('active', mode === 'query');
+    if(mode === 'query'){
+      input.inputMode = 'text';
+      input.placeholder = 'e.g. Nike Air Max 90 size 10';
+    } else {
+      input.inputMode = 'numeric';
+      input.placeholder = 'Enter the barcode…';
+    }
+  }
+
+  function openManualSearch(mode){
+    if(scanned) return;
+    setManualMode(mode || 'barcode');
+    showManualFallback(mode === 'query' ? 'e.g. Nike Air Max 90 size 10' : 'Enter the barcode…');
+  }
+
   function showManualFallback(message){
     if(scanned) return;
     clearTimeout(fallbackTimer);
@@ -953,10 +1040,76 @@
     clearTimeout(fallbackTimer);
     stopQuagga();
     document.getElementById('manualFallback').classList.remove('show');
-    proceedWithCode(val);
+    if(manualMode === 'query'){
+      proceedWithQuery(val);
+    } else {
+      proceedWithCode(val);
+    }
+  }
+
+  // "Wrong product?" — lets the user correct a bad UPC match by re-searching
+  // eBay with a typed product name instead of the scanned barcode.
+  function wrongProduct(){
+    scanned = false;
+    clearTimeout(fallbackTimer);
+    clearTimeout(initGuardTimer);
+    stopQuagga();
+    document.getElementById('result').classList.remove('visible');
+    document.getElementById('ctaBar').classList.remove('visible');
+    document.getElementById('notFound').style.display = 'none';
+    document.getElementById('scannerContainer').style.display = 'block';
+    document.getElementById('shutterHint').style.display = 'none';
+    document.getElementById('uploadPhotoBtn').style.display = 'none';
+    document.getElementById('searchByNameBtn').style.display = 'none';
+    document.getElementById('detailsSection').style.display = 'none';
+    document.getElementById('detailsToggleLabel').textContent = 'View details';
+    document.getElementById('detailsChevron').style.transform = 'rotate(0deg)';
+
+    setManualMode('query');
+    document.getElementById('manualFallback').classList.add('show');
+    const input = document.getElementById('manualInput');
+    input.value = (lastScanData && lastScanData.product && lastScanData.product.title) ||
+                  (lastScanData && lastScanData.query) || '';
+    document.getElementById('screen').scrollTo({ top: 0, behavior: 'smooth' });
+    input.focus();
+    input.select();
   }
 
   const BACKEND_URL = 'https://reseller-backend-9exp.onrender.com';
+
+  const SETTINGS_KEY = 'resellers_settings';
+  const SETTINGS_DEFAULTS = { shipping: 6, minRoi: 20 };
+
+  function loadSettings(){
+    try {
+      return Object.assign({}, SETTINGS_DEFAULTS, JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {});
+    } catch(e) {
+      return Object.assign({}, SETTINGS_DEFAULTS);
+    }
+  }
+
+  function openSettings(){
+    const s = loadSettings();
+    document.getElementById('settingShipping').value = s.shipping;
+    document.getElementById('settingMinRoi').value = s.minRoi;
+    document.getElementById('settingsSavedNote').style.display = 'none';
+    document.getElementById('settingsPanel').style.display = 'flex';
+  }
+
+  function closeSettings(){
+    document.getElementById('settingsPanel').style.display = 'none';
+  }
+
+  function saveSettings(){
+    const shipping = parseFloat(document.getElementById('settingShipping').value);
+    const minRoi = parseFloat(document.getElementById('settingMinRoi').value);
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      shipping: Number.isFinite(shipping) ? shipping : SETTINGS_DEFAULTS.shipping,
+      minRoi: Number.isFinite(minRoi) ? minRoi : SETTINGS_DEFAULTS.minRoi
+    }));
+    document.getElementById('settingsSavedNote').style.display = 'block';
+    if(lastScanData) recomputeDecision(); // reflect the new numbers immediately if a result is on screen
+  }
 
   const HISTORY_KEY = 'resellers_history';
 
@@ -1038,6 +1191,8 @@
     document.getElementById('shutterHint').style.display = 'block';
     document.getElementById('shutterHint').textContent = 'Tap to scan';
     document.getElementById('uploadPhotoBtn').style.display = 'flex';
+    document.getElementById('searchByNameBtn').style.display = 'flex';
+    setManualMode('barcode');
     document.getElementById('detailsSection').style.display = 'none';
     document.getElementById('detailsToggleLabel').textContent = 'View details';
     document.getElementById('detailsChevron').style.transform = 'rotate(0deg)';
@@ -1079,9 +1234,18 @@
   }
 
   function proceedWithCode(code){
+    runLookup({ barcode: code }, code);
+  }
+
+  function proceedWithQuery(text){
+    runLookup({ query: text }, `"${text}" (manual)`);
+  }
+
+  function runLookup(payload, displayLabel){
     document.getElementById('camNote').classList.remove('show');
     document.getElementById('uploadPhotoBtn').style.display = 'none';
-    document.getElementById('scannedCode').textContent = code;
+    document.getElementById('searchByNameBtn').style.display = 'none';
+    document.getElementById('scannedCode').textContent = displayLabel;
     document.getElementById('analyzing').classList.add('show');
     document.getElementById('notFound').style.display = 'none';
     document.getElementById('result').classList.remove('visible');
@@ -1094,7 +1258,7 @@
       analyzingText.textContent = 'Still working… the server may be waking up (up to 50s)';
     }, 6000);
 
-    fetchScanWithRetry(code, undefined, 3)
+    fetchScanWithRetry(payload, 3)
       .then(data => {
         clearTimeout(wakeupTimer);
         document.getElementById('analyzing').classList.remove('show');
@@ -1120,14 +1284,14 @@
       });
   }
 
-  function fetchScanOnce(code, costPrice, timeoutMs){
+  function fetchScanOnce(payload, timeoutMs){
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     return fetch(BACKEND_URL + '/api/scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ barcode: code, costPrice }),
+      body: JSON.stringify(payload),
       signal: controller.signal
     }).then(res => {
       clearTimeout(timer);
@@ -1142,13 +1306,13 @@
   // Render's free tier can take up to ~50s to wake from a cold start, so the
   // first attempt gets a generous timeout; retries stay shorter since the
   // server is presumably already awake by then.
-  function fetchScanWithRetry(code, costPrice, attemptsLeft, attemptIndex){
+  function fetchScanWithRetry(payload, attemptsLeft, attemptIndex){
     attemptIndex = attemptIndex || 0;
     const timeoutMs = attemptIndex === 0 ? 55000 : 20000;
-    return fetchScanOnce(code, costPrice, timeoutMs).catch(err => {
+    return fetchScanOnce(payload, timeoutMs).catch(err => {
       if (attemptsLeft <= 1) throw err;
       return new Promise(resolve => setTimeout(resolve, 3000))
-        .then(() => fetchScanWithRetry(code, costPrice, attemptsLeft - 1, attemptIndex + 1));
+        .then(() => fetchScanWithRetry(payload, attemptsLeft - 1, attemptIndex + 1));
     });
   }
 
@@ -1230,13 +1394,16 @@
   }
 
   const EBAY_FEE_RATE = 0.13;
-  const ESTIMATED_SHIPPING = 6;
 
   function computeDecision(suggested, cost, referenceCount){
     if(cost == null || Number.isNaN(cost)){
       return { hasCost:false };
     }
-    const netProfit = +(suggested - cost - (suggested * EBAY_FEE_RATE) - ESTIMATED_SHIPPING).toFixed(2);
+    const settings = loadSettings();
+    const shipping = settings.shipping;
+    const minRoi = settings.minRoi;
+
+    const netProfit = +(suggested - cost - (suggested * EBAY_FEE_RATE) - shipping).toFixed(2);
     const roi = cost > 0 ? Math.round((netProfit / cost) * 100) : null;
 
     let score = 50;
@@ -1265,6 +1432,11 @@
       decision = 'consider'; label = 'CONSIDER'; cls = 'consider';
     } else {
       decision = 'marginal'; label = 'MARGINAL — LOW SCORE'; cls = 'avoid';
+    }
+
+    // A deal can score well but still fall short of the reseller's own bar.
+    if(decision === 'buy' && roi != null && roi < minRoi){
+      decision = 'consider'; label = `CONSIDER — BELOW YOUR ${minRoi}% MIN ROI`; cls = 'consider';
     }
 
     return { hasCost:true, netProfit, roi, score, decision, label, cls };
