@@ -292,6 +292,23 @@
   .history-tab.active{
     background:var(--mint-dim); border-color:var(--mint); color:var(--mint);
   }
+
+  .hist-row{
+    position:relative; overflow:hidden; border-radius:16px; margin-bottom:10px;
+  }
+  .hist-row-delete{
+    position:absolute; inset:0;
+    display:flex; align-items:stretch; justify-content:flex-end;
+    background:var(--coral);
+  }
+  .hist-row-delete-btn{
+    width:76px; display:flex; align-items:center; justify-content:center;
+  }
+  .hist-row-content{
+    position:relative;
+    touch-action:pan-y;
+    will-change:transform;
+  }
   .settings-seg{
     flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
     border:1px solid var(--stroke); background:var(--surface); color:var(--text-dim);
@@ -1539,9 +1556,19 @@
   const SAVED_KEY = 'resellers_saved';
   const PURCHASED_KEY = 'resellers_purchased';
 
+  function genId(){
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
   function loadList(key){
     try {
-      return JSON.parse(localStorage.getItem(key)) || [];
+      const items = JSON.parse(localStorage.getItem(key)) || [];
+      let backfilled = false;
+      items.forEach(item => {
+        if(!item.id){ item.id = genId(); backfilled = true; }
+      });
+      if(backfilled) localStorage.setItem(key, JSON.stringify(items));
+      return items;
     } catch(e) {
       return [];
     }
@@ -1555,6 +1582,7 @@
     let img = (data.product && data.product.images && data.product.images[0]) || null;
     if (img && img.startsWith('//')) img = 'https:' + img;
     history.unshift({
+      id: genId(),
       code,
       name,
       query: data.query || name,
@@ -1583,6 +1611,7 @@
     const d = computeDecision(lastScanData.suggested, cost, lastScanData.referenceCount, lastScanData.avgShipping);
 
     return {
+      id: genId(),
       code,
       name,
       query: lastScanData.query || name,
@@ -1671,20 +1700,123 @@
       }
 
       return `
-        <a href="${searchUrl}" target="_blank" rel="noopener"
-           style="text-decoration:none;color:inherit;display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--stroke);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
-          <div style="width:46px;height:46px;border-radius:12px;flex-shrink:0;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;">${thumb}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:13.5px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</div>
-            <div style="font-size:11px;color:var(--text-dim);margin-bottom:5px;">${date.toLocaleDateString()} · ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-            <span style="font-size:10.5px;color:var(--gold);font-weight:700;">${subLabel}</span>
+        <div class="hist-row" data-id="${item.id}">
+          <div class="hist-row-delete">
+            <div class="hist-row-delete-btn" data-delete-id="${item.id}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </div>
           </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div class="mono" style="font-size:16px;font-weight:700;color:var(--mint);">${rightTop}</div>
-            <div style="font-size:9.5px;color:var(--text-faint);margin-top:2px;">${rightBottom}</div>
-          </div>
-        </a>`;
+          <a href="${searchUrl}" target="_blank" rel="noopener" class="hist-row-content" data-id="${item.id}"
+             style="text-decoration:none;color:inherit;display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--stroke);border-radius:16px;padding:12px 14px;">
+            <div style="width:46px;height:46px;border-radius:12px;flex-shrink:0;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;">${thumb}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13.5px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-bottom:5px;">${date.toLocaleDateString()} · ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+              <span style="font-size:10.5px;color:var(--gold);font-weight:700;">${subLabel}</span>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div class="mono" style="font-size:16px;font-weight:700;color:var(--mint);">${rightTop}</div>
+              <div style="font-size:9.5px;color:var(--text-faint);margin-top:2px;">${rightBottom}</div>
+            </div>
+          </a>
+        </div>`;
     }).join('');
+  }
+
+  function deleteHistoryItem(id){
+    const key = historyTab === 'scanned' ? HISTORY_KEY : historyTab === 'saved' ? SAVED_KEY : PURCHASED_KEY;
+    const items = loadList(key).filter(item => item.id !== id);
+    localStorage.setItem(key, JSON.stringify(items));
+    renderHistoryList();
+  }
+
+  // --- iPhone-style swipe-to-delete for history rows -----------------------
+  const SWIPE_OPEN_X = -76;
+  let swipeActiveEl = null;
+  let swipeStartX = 0, swipeStartY = 0, swipeCurX = 0, swipeDirLocked = null;
+
+  function closeAllSwipeRows(except){
+    document.querySelectorAll('#historyList .hist-row-content.swiped-open').forEach(el => {
+      if(el !== except){
+        el.style.transition = 'transform 0.2s ease';
+        el.style.transform = 'translateX(0)';
+        el.classList.remove('swiped-open');
+      }
+    });
+  }
+
+  function initHistorySwipe(){
+    const list = document.getElementById('historyList');
+
+    list.addEventListener('pointerdown', (e) => {
+      const content = e.target.closest('.hist-row-content');
+      if(!content) return;
+      swipeActiveEl = content;
+      swipeStartX = e.clientX;
+      swipeStartY = e.clientY;
+      swipeDirLocked = null;
+      content.style.transition = 'none';
+    });
+
+    list.addEventListener('pointermove', (e) => {
+      if(!swipeActiveEl) return;
+      const dx = e.clientX - swipeStartX;
+      const dy = e.clientY - swipeStartY;
+      if(swipeDirLocked === null){
+        if(Math.abs(dx) > 6 || Math.abs(dy) > 6){
+          swipeDirLocked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        }
+      }
+      if(swipeDirLocked !== 'x') return;
+      const isOpen = swipeActiveEl.classList.contains('swiped-open');
+      const base = isOpen ? SWIPE_OPEN_X : 0;
+      swipeCurX = Math.max(SWIPE_OPEN_X, Math.min(0, base + dx));
+      swipeActiveEl.style.transform = `translateX(${swipeCurX}px)`;
+    });
+
+    function endSwipe(){
+      if(!swipeActiveEl) return;
+      swipeActiveEl.style.transition = 'transform 0.2s ease';
+      if(swipeDirLocked === 'x'){
+        swipeActiveEl.dataset.wasDragging = '1';
+        if(swipeCurX < SWIPE_OPEN_X / 2){
+          closeAllSwipeRows(swipeActiveEl);
+          swipeActiveEl.style.transform = `translateX(${SWIPE_OPEN_X}px)`;
+          swipeActiveEl.classList.add('swiped-open');
+        } else {
+          swipeActiveEl.style.transform = 'translateX(0)';
+          swipeActiveEl.classList.remove('swiped-open');
+        }
+      } else {
+        swipeActiveEl.dataset.wasDragging = '0';
+      }
+      swipeActiveEl = null;
+      swipeDirLocked = null;
+    }
+
+    list.addEventListener('pointerup', endSwipe);
+    list.addEventListener('pointercancel', endSwipe);
+
+    // Capture-phase click so we can stop navigation for delete taps and for
+    // "tap to close" on an already-open row, before the <a> follows its href.
+    list.addEventListener('click', (e) => {
+      const delBtn = e.target.closest('.hist-row-delete-btn');
+      if(delBtn){
+        e.preventDefault();
+        e.stopPropagation();
+        deleteHistoryItem(delBtn.dataset.deleteId);
+        return;
+      }
+      const content = e.target.closest('.hist-row-content');
+      if(content && (content.classList.contains('swiped-open') || content.dataset.wasDragging === '1')){
+        e.preventDefault();
+        e.stopPropagation();
+        content.style.transition = 'transform 0.2s ease';
+        content.style.transform = 'translateX(0)';
+        content.classList.remove('swiped-open');
+        content.dataset.wasDragging = '0';
+      }
+    }, true);
   }
 
   function openHistory(){
@@ -2137,6 +2269,7 @@
   // another tap every time the app is opened.
   applyLanguage();
   updateScanToggleButton();
+  initHistorySwipe();
   if(cameraPermissionGranted){
     startScanner();
   }
