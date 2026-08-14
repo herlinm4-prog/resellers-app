@@ -273,6 +273,57 @@
     letter-spacing:0.3px;
   }
 
+  .decision-card{
+    margin-top:0;
+    background:var(--surface); border:1px solid var(--stroke);
+    border-radius:22px; overflow:hidden;
+  }
+  .decision-banner{
+    padding:18px 18px 14px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    transition:background 0.3s ease;
+  }
+  .decision-banner.buy{ background:linear-gradient(135deg, var(--mint-dim), rgba(46,230,166,0.05)); }
+  .decision-banner.consider{ background:linear-gradient(135deg, var(--gold-dim), rgba(240,180,41,0.05)); }
+  .decision-banner.avoid{ background:linear-gradient(135deg, rgba(255,104,89,0.18), rgba(255,104,89,0.04)); }
+  .decision-banner.neutral{ background:var(--surface-2); }
+  .decision-label{ font-size:17px; font-weight:800; letter-spacing:-0.2px; }
+  .decision-banner.buy .decision-label{ color:var(--mint); }
+  .decision-banner.consider .decision-label{ color:var(--gold); }
+  .decision-banner.avoid .decision-label{ color:var(--coral); }
+  .decision-banner.neutral .decision-label{ color:var(--text-dim); font-size:13.5px; font-weight:700; }
+  .decision-score{
+    flex-shrink:0; font-size:14px; font-weight:800; color:var(--text);
+    background:rgba(255,255,255,0.07); border-radius:12px; padding:6px 11px;
+    font-family:'Space Mono', monospace;
+  }
+  .decision-reason{ padding:0 18px 14px; margin-top:-6px; font-size:11.5px; color:var(--text-dim); line-height:1.4; }
+
+  .decision-metrics{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px 10px;
+    padding:2px 18px 16px;
+  }
+  .metric-label{ font-size:10px; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-faint); font-weight:700; margin-bottom:3px; }
+  .metric-value{ font-size:18px; font-weight:700; font-family:'Space Mono', monospace; }
+  .metric-value.profit-pos{ color:var(--mint); }
+  .metric-value.profit-neg{ color:var(--coral); }
+
+  .cost-entry-row{ padding:2px 18px 16px; border-top:1px solid var(--stroke-soft); margin-top:2px; padding-top:14px; }
+  .quick-cost-row{ display:flex; gap:7px; margin-top:9px; flex-wrap:wrap; }
+  .quick-cost-btn{
+    background:var(--surface-2); border:1px solid var(--stroke); color:var(--text);
+    border-radius:10px; padding:8px 13px; font-family:'Space Mono', monospace;
+    font-size:12.5px; font-weight:600;
+  }
+  .quick-cost-btn.active{ background:var(--mint-dim); border-color:var(--mint); color:var(--mint); }
+
+  .details-toggle{
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:13px; border-top:1px solid var(--stroke-soft);
+    font-size:12px; font-weight:700; color:var(--text-dim);
+  }
+  #detailsSection{ margin-top:14px; }
+
   .ticket{
     margin-top:14px;
     background:var(--surface);
@@ -458,12 +509,6 @@
 
       <div class="content">
 
-        <div style="margin:10px 2px 14px;">
-          <div class="price-label" style="margin-bottom:6px;">Store cost (optional)</div>
-          <input id="costInput" class="mono" type="text" inputmode="decimal" placeholder="e.g. 12.99"
-            style="width:100%;background:var(--surface);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:11px 13px;font-size:14px;">
-        </div>
-
         <div class="scan-card" id="scanCard" onclick="startScanner()">
           <div id="scannerContainer"></div>
           <div class="cam-tint"></div>
@@ -504,7 +549,54 @@
 
         <div id="result">
 
-          <div class="section-label">Product identified</div>
+          <div class="decision-card" id="decisionCard">
+            <div class="decision-banner neutral" id="decisionBanner">
+              <div class="decision-label" id="decisionLabel">ADD COST TO SEE DECISION</div>
+              <div class="decision-score" id="decisionScore" style="display:none;">— /100</div>
+            </div>
+            <div class="decision-reason" id="decisionReason" style="display:none;"></div>
+
+            <div class="decision-metrics" id="decisionMetrics" style="display:none;">
+              <div>
+                <div class="metric-label">Compra</div>
+                <div class="metric-value" id="decCost">$0</div>
+              </div>
+              <div>
+                <div class="metric-label">Venta estimada</div>
+                <div class="metric-value" id="decSell">$0</div>
+              </div>
+              <div>
+                <div class="metric-label">Profit neto</div>
+                <div class="metric-value" id="decProfit">$0</div>
+              </div>
+              <div>
+                <div class="metric-label">ROI</div>
+                <div class="metric-value" id="decRoi">0%</div>
+              </div>
+            </div>
+            <div class="refs-count" id="refsCountTop" style="padding:0 18px 14px;margin-top:-6px;">— references analyzed</div>
+
+            <div class="cost-entry-row">
+              <div class="price-label" style="margin-bottom:7px;">Cost</div>
+              <input id="costInputResult" class="mono" type="text" inputmode="decimal" placeholder="$0.00" oninput="recomputeDecision()"
+                style="width:100%;background:var(--surface-2);border:1px solid var(--stroke);border-radius:12px;color:var(--text);padding:12px 13px;font-size:15px;">
+              <div class="quick-cost-row">
+                <button class="quick-cost-btn" onclick="setQuickCost(5)">$5</button>
+                <button class="quick-cost-btn" onclick="setQuickCost(7.99)">$7.99</button>
+                <button class="quick-cost-btn" onclick="setQuickCost(9.99)">$9.99</button>
+                <button class="quick-cost-btn" onclick="setQuickCost(14.99)">$14.99</button>
+              </div>
+            </div>
+
+            <div class="details-toggle" onclick="toggleDetails()">
+              <span id="detailsToggleLabel">View details</span>
+              <svg id="detailsChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.25s ease;"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+
+          <div id="detailsSection" style="display:none;">
+
+          <div class="section-label" style="margin-top:16px;">Product identified</div>
           <div class="product-card">
             <div class="product-thumb" id="productThumb">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" id="productThumbIcon">
@@ -578,6 +670,13 @@
             </div>
           </div>
 
+          <a href="#" id="listOnEbayLink" target="_blank" rel="noopener"
+            style="display:block;text-align:center;margin-top:14px;font-size:12.5px;font-weight:600;color:var(--text-dim);text-decoration:none;padding:10px;">
+            List on eBay ↗
+          </a>
+
+          </div>
+
         </div>
 
         <div id="notFound" style="display:none;text-align:center;padding:30px 10px;color:var(--text-dim);font-size:13.5px;">
@@ -594,13 +693,15 @@
     </div>
 
     <div class="cta-bar" id="ctaBar">
-      <button class="cta-btn" id="ctaBtn">
-        <span id="ctaLabel">List on eBay</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#062017" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-      </button>
-      <button onclick="rescan()" style="width:100%;margin-top:9px;border:1px solid var(--stroke);background:var(--surface-2);color:var(--text-dim);border-radius:14px;padding:12px;font-family:'Space Grotesk',sans-serif;font-size:13.5px;font-weight:600;">
-        Scan another item
-      </button>
+      <div style="display:flex;gap:10px;">
+        <button onclick="skipItem()"
+          style="flex:0.85;border:1px solid var(--stroke);background:var(--surface-2);color:var(--text-dim);border-radius:16px;padding:16px 10px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;">
+          Skip
+        </button>
+        <button onclick="buyItem()" class="cta-btn" style="flex:1;">
+          <span id="ctaLabel">Buy — Next scan</span>
+        </button>
+      </div>
     </div>
 
     <div class="home-indicator"></div>
@@ -857,14 +958,6 @@
 
   const BACKEND_URL = 'https://reseller-backend-9exp.onrender.com';
 
-  const OPPORTUNITY_LABELS = {
-    especial: '🌟 Special opportunity',
-    buena: '✅ Good opportunity',
-    normal: '🙂 Normal opportunity',
-    no_recomendado: '⚠️ Not recommended',
-    sin_costo: 'ℹ️ Add store cost for a full recommendation'
-  };
-
   const HISTORY_KEY = 'resellers_history';
 
   function loadHistory(){
@@ -886,7 +979,7 @@
       query: data.query || name,
       image: img,
       suggested: data.suggested,
-      opportunity: data.opportunity,
+      referenceCount: data.referenceCount,
       dataSource: data.dataSource,
       timestamp: Date.now()
     });
@@ -901,7 +994,7 @@
     } else {
       list.innerHTML = history.map(item => {
         const date = new Date(item.timestamp);
-        const label = OPPORTUNITY_LABELS[item.opportunity] || '';
+        const label = item.referenceCount ? `${item.referenceCount} listings analyzed` : '';
         const searchUrl = 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(item.query || item.name);
         const thumb = item.image
           ? `<img src="${item.image}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='📦';">`
@@ -945,12 +1038,44 @@
     document.getElementById('shutterHint').style.display = 'block';
     document.getElementById('shutterHint').textContent = 'Tap to scan';
     document.getElementById('uploadPhotoBtn').style.display = 'flex';
+    document.getElementById('detailsSection').style.display = 'none';
+    document.getElementById('detailsToggleLabel').textContent = 'View details';
+    document.getElementById('detailsChevron').style.transform = 'rotate(0deg)';
     document.getElementById('screen').scrollTo({ top: 0, behavior: 'smooth' });
 
     const marker = document.getElementById('gaugeMarker');
     const caption = document.getElementById('gaugeCaption');
     marker.classList.remove('show');
     caption.classList.remove('show');
+  }
+
+  // Continuous sourcing flow: Scan -> Result -> Buy/Skip -> Scan Again,
+  // without ever dropping back to a home/dashboard screen. If camera
+  // permission is already granted, the camera resumes automatically.
+  function nextScan(){
+    rescan();
+    if(cameraPermissionGranted){
+      startScanner();
+    }
+  }
+
+  function buyItem(){
+    // Phase 3 will persist this to a Scanned/Saved/Purchased history.
+    nextScan();
+  }
+
+  function skipItem(){
+    nextScan();
+  }
+
+  function toggleDetails(){
+    const section = document.getElementById('detailsSection');
+    const chevron = document.getElementById('detailsChevron');
+    const label = document.getElementById('detailsToggleLabel');
+    const isOpen = section.style.display !== 'none';
+    section.style.display = isOpen ? 'none' : 'block';
+    label.textContent = isOpen ? 'View details' : 'Hide details';
+    chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
   }
 
   function proceedWithCode(code){
@@ -965,14 +1090,11 @@
     const analyzingText = document.querySelector('#analyzing .analyzing-text');
     analyzingText.textContent = 'Checking eBay sales…';
 
-    const costRaw = document.getElementById('costInput').value.trim();
-    const costPrice = costRaw ? Number(costRaw) : undefined;
-
     const wakeupTimer = setTimeout(() => {
       analyzingText.textContent = 'Still working… the server may be waking up (up to 50s)';
     }, 6000);
 
-    fetchScanWithRetry(code, costPrice, 3)
+    fetchScanWithRetry(code, undefined, 3)
       .then(data => {
         clearTimeout(wakeupTimer);
         document.getElementById('analyzing').classList.remove('show');
@@ -1030,10 +1152,13 @@
     });
   }
 
+  let lastScanData = null;
+
   function renderResult(data){
     const min = data.min, avg = data.avg, max = data.max, median = data.median, suggested = data.suggested;
 
     saveToHistory(document.getElementById('scannedCode').textContent, data);
+    lastScanData = data;
 
     const thumbImg = document.getElementById('productThumbImg');
     const thumbIcon = document.getElementById('productThumbIcon');
@@ -1070,18 +1195,17 @@
 
     document.getElementById('gaugeCaption').textContent = `Suggested $${suggested}`;
     document.getElementById('refsCount').textContent = `${data.referenceCount} references analyzed`;
+    document.getElementById('refsCountTop').textContent = `${data.referenceCount} active listings analyzed`;
 
-    document.getElementById('opportunityPill').textContent =
-      OPPORTUNITY_LABELS[data.opportunity] || data.opportunity;
+    document.getElementById('opportunityPill').textContent = 'Reference-price gauge below';
 
     document.getElementById('adviceText').innerHTML =
       `Most references cluster around the median of <b>$${median}</b>. We suggest listing at <b>$${suggested}</b>: it balances the bulk of the market (avg $${avg}) without giving away margin.`;
 
     document.getElementById('suggestedValue').textContent = `$${suggested}`;
-    document.getElementById('marginNote').textContent =
-      data.estimatedMargin != null ? `≈ $${data.estimatedMargin} margin` : 'Add store cost to see margin';
 
-    document.getElementById('ctaLabel').textContent = `List on eBay for $${suggested}`;
+    document.getElementById('listOnEbayLink').href =
+      'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(data.query || (data.product && data.product.title) || '');
 
     document.getElementById('result').classList.add('visible');
     document.getElementById('ctaBar').classList.add('visible');
@@ -1096,7 +1220,137 @@
       caption.classList.add('show');
     });
 
+    // Prefill with the last cost used, so buying decisions take seconds.
+    const lastCost = localStorage.getItem('resellers_last_cost');
+    document.getElementById('costInputResult').value = lastCost || '';
+    recomputeDecision();
+    highlightQuickCost(lastCost ? Number(lastCost) : null);
+
     document.getElementById('screen').scrollTo({ top: 60, behavior: 'smooth' });
+  }
+
+  const EBAY_FEE_RATE = 0.13;
+  const ESTIMATED_SHIPPING = 6;
+
+  function computeDecision(suggested, cost, referenceCount){
+    if(cost == null || Number.isNaN(cost)){
+      return { hasCost:false };
+    }
+    const netProfit = +(suggested - cost - (suggested * EBAY_FEE_RATE) - ESTIMATED_SHIPPING).toFixed(2);
+    const roi = cost > 0 ? Math.round((netProfit / cost) * 100) : null;
+
+    let score = 50;
+    if(roi != null){
+      if(roi >= 100) score += 30;
+      else if(roi >= 50) score += 20;
+      else if(roi >= 20) score += 10;
+      else if(roi < 0) score -= 30;
+    }
+    if(netProfit >= 15) score += 15;
+    else if(netProfit >= 5) score += 8;
+    else if(netProfit >= 0) score += 2;
+    else score -= 15;
+
+    if(referenceCount <= 5) score += 10;
+    else if(referenceCount <= 15) score += 5;
+
+    score = Math.max(0, Math.min(100, score));
+
+    let decision, label, cls;
+    if(netProfit <= 0){
+      decision = 'avoid'; label = 'AVOID — LOSING MONEY'; cls = 'avoid';
+    } else if(score >= 75){
+      decision = 'buy'; label = 'BUY — GOOD DEAL'; cls = 'buy';
+    } else if(score >= 50){
+      decision = 'consider'; label = 'CONSIDER'; cls = 'consider';
+    } else {
+      decision = 'marginal'; label = 'MARGINAL — LOW SCORE'; cls = 'avoid';
+    }
+
+    return { hasCost:true, netProfit, roi, score, decision, label, cls };
+  }
+
+  function scoreReason(d, referenceCount){
+    const bits = [];
+    if(d.roi != null){
+      if(d.roi >= 100) bits.push('very high ROI');
+      else if(d.roi >= 40) bits.push('solid ROI');
+      else if(d.roi < 20) bits.push('thin ROI');
+    }
+    if(referenceCount <= 5) bits.push('low competition');
+    else if(referenceCount > 15) bits.push('high competition');
+    else bits.push('moderate competition');
+    if(d.netProfit >= 15) bits.push('strong margin');
+    else if(d.netProfit < 0) bits.push('negative margin');
+    return bits.length ? bits.join(' · ') : '';
+  }
+
+  function renderDecision(d, cost, suggested, referenceCount){
+    const banner = document.getElementById('decisionBanner');
+    const label = document.getElementById('decisionLabel');
+    const scoreEl = document.getElementById('decisionScore');
+    const reasonEl = document.getElementById('decisionReason');
+    const metrics = document.getElementById('decisionMetrics');
+
+    banner.className = 'decision-banner';
+
+    if(!d.hasCost){
+      banner.classList.add('neutral');
+      label.textContent = 'ADD COST TO SEE DECISION';
+      scoreEl.style.display = 'none';
+      reasonEl.style.display = 'none';
+      metrics.style.display = 'none';
+      const marginNoteEmpty = document.getElementById('marginNote');
+      if(marginNoteEmpty) marginNoteEmpty.textContent = 'Add cost to see margin';
+      return;
+    }
+
+    banner.classList.add(d.cls);
+    label.textContent = d.label;
+    scoreEl.style.display = 'block';
+    scoreEl.textContent = `${d.score} /100`;
+
+    const reason = scoreReason(d, referenceCount);
+    reasonEl.style.display = reason ? 'block' : 'none';
+    reasonEl.textContent = reason;
+
+    metrics.style.display = 'grid';
+    document.getElementById('decCost').textContent = `$${cost.toFixed(2)}`;
+    document.getElementById('decSell').textContent = `$${suggested}`;
+    const profitEl = document.getElementById('decProfit');
+    profitEl.textContent = (d.netProfit < 0 ? '-$' : '$') + Math.abs(d.netProfit).toFixed(2);
+    profitEl.className = 'metric-value ' + (d.netProfit >= 0 ? 'profit-pos' : 'profit-neg');
+    document.getElementById('decRoi').textContent = d.roi != null ? `${d.roi}%` : '—';
+
+    const marginNote = document.getElementById('marginNote');
+    if(marginNote){
+      marginNote.textContent = `≈ ${d.netProfit >= 0 ? '$' : '-$'}${Math.abs(d.netProfit).toFixed(2)} net margin`;
+    }
+  }
+
+  function recomputeDecision(){
+    if(!lastScanData) return;
+    const raw = document.getElementById('costInputResult').value.trim();
+    const cost = raw ? Number(raw) : null;
+    const d = computeDecision(lastScanData.suggested, cost, lastScanData.referenceCount);
+    renderDecision(d, cost, lastScanData.suggested, lastScanData.referenceCount);
+
+    if(cost != null && !Number.isNaN(cost)){
+      localStorage.setItem('resellers_last_cost', String(cost));
+    }
+    highlightQuickCost(cost);
+  }
+
+  function setQuickCost(value){
+    document.getElementById('costInputResult').value = value;
+    recomputeDecision();
+  }
+
+  function highlightQuickCost(cost){
+    document.querySelectorAll('.quick-cost-btn').forEach(btn => {
+      const btnValue = parseFloat(btn.textContent.replace('$',''));
+      btn.classList.toggle('active', cost != null && Math.abs(btnValue - cost) < 0.001);
+    });
   }
 </script>
 
