@@ -348,11 +348,13 @@
     transition:background 0.3s ease;
   }
   .decision-banner.buy{ background:linear-gradient(135deg, var(--mint-dim), rgba(46,230,166,0.05)); }
+  .decision-banner.bigdeal{ background:linear-gradient(135deg, var(--gold-dim), rgba(240,180,41,0.12)); }
   .decision-banner.consider{ background:linear-gradient(135deg, var(--gold-dim), rgba(240,180,41,0.05)); }
   .decision-banner.avoid{ background:linear-gradient(135deg, rgba(255,104,89,0.18), rgba(255,104,89,0.04)); }
   .decision-banner.neutral{ background:var(--surface-2); }
   .decision-label{ font-size:17px; font-weight:800; letter-spacing:-0.2px; }
   .decision-banner.buy .decision-label{ color:var(--mint); }
+  .decision-banner.bigdeal .decision-label{ color:var(--gold); }
   .decision-banner.consider .decision-label{ color:var(--gold); }
   .decision-banner.avoid .decision-label{ color:var(--coral); }
   .decision-banner.neutral .decision-label{ color:var(--text-dim); font-size:13.5px; font-weight:700; }
@@ -367,10 +369,23 @@
     display:grid; grid-template-columns:1fr 1fr; gap:14px 10px;
     padding:2px 18px 16px;
   }
-  .metric-label{ font-size:10px; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-faint); font-weight:700; margin-bottom:3px; }
+  .metric-label{ font-size:10px; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-dim); font-weight:700; margin-bottom:3px; }
   .metric-value{ font-size:18px; font-weight:700; font-family:'Space Mono', monospace; }
   .metric-value.profit-pos{ color:var(--mint); }
   .metric-value.profit-neg{ color:var(--coral); }
+
+  .gauge-wrap-top{ padding:2px 18px 16px; }
+  .gauge-range-row{
+    display:flex; justify-content:space-between; margin-top:32px;
+    font-size:11px; color:var(--text-dim); font-weight:600; font-family:'Space Mono', monospace;
+  }
+  .info-pill{
+    display:flex; align-items:center; gap:8px;
+    margin:0 18px 16px; padding:10px 13px;
+    background:var(--surface-2); border:1px solid var(--stroke); border-radius:12px;
+    font-size:11.5px; color:var(--text-dim); line-height:1.4;
+  }
+  .info-pill svg{ flex-shrink:0; }
 
   .cost-entry-row{ padding:2px 18px 16px; border-top:1px solid var(--stroke-soft); margin-top:2px; padding-top:14px; }
   .quick-cost-row{ display:flex; gap:7px; margin-top:9px; flex-wrap:wrap; }
@@ -423,7 +438,7 @@
   }
   .price-grid .col{ display:flex; flex-direction:column; gap:5px; }
   .price-grid .col:not(:last-child){ border-right:1px solid var(--stroke-soft); }
-  .price-label{ font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-faint); font-weight:700; }
+  .price-label{ font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); font-weight:700; }
   .price-value{ font-size:21px; font-weight:700; letter-spacing:-0.5px; }
   .price-value.min{ color:var(--coral); }
   .price-value.avg{ color:var(--text); }
@@ -769,8 +784,21 @@
                 <div class="metric-value" id="decRoi">0%</div>
               </div>
             </div>
-            <div class="refs-count" id="refsCountTop" style="padding:0 18px 4px;margin-top:-6px;">— references analyzed</div>
-            <div class="refs-count" id="shippingSourceNote" style="padding:0 18px 14px;margin-top:-8px;font-size:10.5px;color:var(--text-faint);">—</div>
+            <div class="gauge-wrap-top">
+              <div class="gauge-track">
+                <div class="gauge-marker" id="gaugeMarker"></div>
+                <div class="gauge-caption" id="gaugeCaption">Suggested $0</div>
+              </div>
+              <div class="gauge-range-row">
+                <span id="gaugeLowLabel">$0</span>
+                <span id="gaugeHighLabel">$0</span>
+              </div>
+            </div>
+
+            <div class="info-pill" id="infoPill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--mint)" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span id="infoPillText">— </span>
+            </div>
 
             <div class="cost-entry-row">
               <div class="price-label" id="lblCost" style="margin-bottom:7px;">Cost</div>
@@ -842,15 +870,7 @@
                 </div>
               </div>
 
-              <div class="gauge-wrap">
-                <div class="gauge-track">
-                  <div class="gauge-marker" id="gaugeMarker"></div>
-                  <div class="gauge-caption" id="gaugeCaption">Suggested $0</div>
-                </div>
-                <div class="refs-count" id="refsCount">— references analyzed</div>
-              </div>
-
-              <div class="opportunity" id="opportunityPill">— </div>
+              <div class="refs-count" id="refsCount" style="margin-top:2px;">— references analyzed</div>
             </div>
           </div>
 
@@ -1335,7 +1355,7 @@
       saveSettings: 'Save settings', clearData: 'Clear scan history & saved data',
       barcode: 'Barcode', productName: 'Product name',
       addCostToSee: 'ADD COST TO SEE DECISION',
-      buyGoodDeal: 'BUY — GOOD DEAL', consider: 'CONSIDER',
+      bigDeal: '🔥 BIG DEAL', buyGoodDeal: '✅ GOOD DEAL', consider: 'CONSIDER',
       avoidLosing: 'AVOID — LOSING MONEY', marginalLow: 'MARGINAL — LOW SCORE',
       considerBelowRoi: (r) => `CONSIDER — BELOW YOUR ${r}% MIN ROI`,
       deactivateScan: 'Deactivate scan', activateScan: 'Activate scan',
@@ -1361,7 +1381,7 @@
       saveSettings: 'Guardar ajustes', clearData: 'Borrar historial y datos guardados',
       barcode: 'Código', productName: 'Nombre del producto',
       addCostToSee: 'AGREGA EL COSTO PARA VER LA DECISIÓN',
-      buyGoodDeal: 'COMPRAR — BUENA OFERTA', consider: 'CONSIDERAR',
+      bigDeal: '🔥 GRAN OFERTA', buyGoodDeal: '✅ BUENA OFERTA', consider: 'CONSIDERAR',
       avoidLosing: 'EVITAR — PÉRDIDA', marginalLow: 'MARGINAL — PUNTAJE BAJO',
       considerBelowRoi: (r) => `CONSIDERAR — DEBAJO DE TU ROI MÍN. DE ${r}%`,
       deactivateScan: 'Desactivar escáner', activateScan: 'Activar escáner',
@@ -1809,10 +1829,14 @@
     const markerPos = Math.min(100, Math.max(0, ((suggested - min) / range) * 100));
 
     document.getElementById('gaugeCaption').textContent = `Suggested $${suggested}`;
+    document.getElementById('gaugeLowLabel').textContent = `$${min} low`;
+    document.getElementById('gaugeHighLabel').textContent = `$${max} high`;
     document.getElementById('refsCount').textContent = `${data.referenceCount} references analyzed`;
-    document.getElementById('refsCountTop').textContent = `${data.referenceCount} active listings analyzed`;
 
-    document.getElementById('opportunityPill').textContent = 'Reference-price gauge below';
+    const isEs = loadSettings().language === 'es';
+    document.getElementById('infoPillText').textContent = isEs
+      ? `Basado en ${data.referenceCount} artículos similares en eBay`
+      : `Based on ${data.referenceCount} similar items on eBay`;
 
     document.getElementById('adviceText').innerHTML =
       `Most references cluster around the median of <b>$${median}</b>. We suggest listing at <b>$${suggested}</b>: it balances the bulk of the market (avg $${avg}) without giving away margin.`;
@@ -1883,6 +1907,8 @@
     let decision, label, cls;
     if(netProfit <= 0){
       decision = 'avoid'; label = t().avoidLosing; cls = 'avoid';
+    } else if(score >= 90 && roi != null && roi >= 100){
+      decision = 'bigdeal'; label = t().bigDeal; cls = 'bigdeal';
     } else if(score >= 75){
       decision = 'buy'; label = t().buyGoodDeal; cls = 'buy';
     } else if(score >= 50){
@@ -1892,7 +1918,7 @@
     }
 
     // A deal can score well but still fall short of the reseller's own bar.
-    if(decision === 'buy' && roi != null && roi < minRoi){
+    if((decision === 'buy' || decision === 'bigdeal') && roi != null && roi < minRoi){
       decision = 'consider'; label = t().considerBelowRoi(minRoi); cls = 'consider';
     }
 
@@ -1932,13 +1958,6 @@
       metrics.style.display = 'none';
       const marginNoteEmpty = document.getElementById('marginNote');
       if(marginNoteEmpty) marginNoteEmpty.textContent = loadSettings().language === 'es' ? 'Agrega el costo para ver el margen' : 'Add cost to see margin';
-      const shipNoteEmpty = document.getElementById('shippingSourceNote');
-      if(shipNoteEmpty && lastScanData){
-        const isEs = loadSettings().language === 'es';
-        shipNoteEmpty.textContent = lastScanData.avgShipping != null
-          ? (isEs ? `Datos de envío disponibles ($${lastScanData.avgShipping.toFixed(2)} prom.)` : `Shipping data available from comps ($${lastScanData.avgShipping.toFixed(2)} avg)`)
-          : (isEs ? 'No se encontraron datos de envío reales para esta búsqueda' : 'No real shipping data found for this search');
-      }
       return;
     }
 
@@ -1959,11 +1978,16 @@
     profitEl.className = 'metric-value ' + (d.netProfit >= 0 ? 'profit-pos' : 'profit-neg');
     document.getElementById('decRoi').textContent = d.roi != null ? `${d.roi}%` : '—';
 
-    const shipNote = document.getElementById('shippingSourceNote');
-    if(shipNote){
-      shipNote.textContent = d.shippingIsReal
-        ? `Shipping est. $${d.shipping.toFixed(2)} — from real comparable listings`
-        : `Shipping est. $${d.shipping.toFixed(2)} — assumed (no shipping data found)`;
+    const isEs = loadSettings().language === 'es';
+    const infoPillText = document.getElementById('infoPillText');
+    if(infoPillText && lastScanData){
+      const base = isEs
+        ? `Basado en ${referenceCount} artículos similares`
+        : `Based on ${referenceCount} similar items`;
+      const shipPart = d.shippingIsReal
+        ? (isEs ? `envío real prom. $${d.shipping.toFixed(2)}` : `real avg shipping $${d.shipping.toFixed(2)}`)
+        : (isEs ? `envío estimado $${d.shipping.toFixed(2)}` : `estimated shipping $${d.shipping.toFixed(2)}`);
+      infoPillText.textContent = `${base} · ${shipPart}`;
     }
 
     const marginNote = document.getElementById('marginNote');
