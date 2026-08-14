@@ -928,7 +928,7 @@
             <div class="badge-found">✓ Read</div>
           </div>
 
-          <div class="section-label">eBay price range</div>
+          <div class="section-label">eBay total price range (item + shipping)</div>
           <div class="ticket">
             <div class="ticket-barcode"></div>
             <div class="ticket-body">
@@ -1921,12 +1921,15 @@
         : `Estimated from ${data.referenceCount} active listings`;
 
     document.getElementById('sourceNote').textContent =
-      data.dataSource === 'sold_confirmed'
-        ? 'Prices come from confirmed eBay sales.'
-        : "Prices come from eBay's live Browse API (active listings, not confirmed sales)." +
+      (data.dataSource === 'sold_confirmed'
+        ? 'Prices come from confirmed eBay sales, item price + shipping combined.'
+        : "Prices come from eBay's live Browse API — item price + shipping combined (active listings, not confirmed sales)." +
           (data.listingMix === 'fixed_price_only'
             ? ' Auction listings were excluded to avoid unreliable low comps.'
-            : ' Sample was too small to exclude auctions, so a few may be included.');
+            : ' Sample was too small to exclude auctions, so a few may be included.')) +
+      (data.multiPackCount > 0
+        ? ` ${data.multiPackCount} multi-pack listing${data.multiPackCount > 1 ? 's were' : ' was'} detected and converted to a per-unit price.`
+        : '');
 
     countUp(document.getElementById('valMin'), min, '$', 700);
     countUp(document.getElementById('valAvg'), avg, '$', 900);
@@ -1946,7 +1949,7 @@
       : `Based on ${data.referenceCount} similar items on eBay`;
 
     document.getElementById('adviceText').innerHTML =
-      `Most references cluster around the median of <b>$${median}</b>. We suggest listing at <b>$${suggested}</b>: it balances the bulk of the market (avg $${avg}) without giving away margin.`;
+      `Comparable listings cluster around a total buyer price (item + shipping) of <b>$${median}</b>. We suggest listing at <b>$${suggested}</b> total: it balances the bulk of the market (avg $${avg}) without giving away margin.`;
 
     document.getElementById('suggestedValue').textContent = `$${suggested}`;
 
