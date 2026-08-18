@@ -1,831 +1,202 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Resellers">
-    <meta name="theme-color" content="#0A0E12">
-    <title>Resellers — Scan it. Know what it's worth.</title>
-    <script src="https://cdn.jsdelivr.net/npm/quaggajs@0.12.1/dist/quagga.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            background: #0A0E12;
-            color: #E0E0E0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        body {
-            overflow-x: hidden;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        .container {
-            max-width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ============ HEADER ============ */
-        header {
-            background: linear-gradient(180deg, #131820 0%, #0A0E12 100%);
-            padding: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-title {
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .icon-btn {
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: rgba(0, 212, 170, 0.1);
-            border-radius: 8px;
-            color: #00D4AA;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .icon-btn:active {
-            background: rgba(0, 212, 170, 0.2);
-            transform: scale(0.95);
-        }
-
-        /* ============ MAIN CONTENT ============ */
-        .content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ============ SCANNER SECTION ============ */
-        .scanner-section {
-            display: none;
-        }
-
-        .scanner-section.active {
-            display: block;
-        }
-
-        #interactive {
-            width: 100%;
-            background: #0A0E12;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-
-        .scanner-controls {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .btn {
-            padding: 12px 16px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            flex: 1;
-        }
-
-        .btn-primary {
-            background: #00D4AA;
-            color: #0A0E12;
-        }
-
-        .btn-primary:active {
-            transform: scale(0.98);
-            opacity: 0.85;
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 2px solid #00D4AA;
-            color: #00D4AA;
-        }
-
-        .btn-secondary:active {
-            background: rgba(0, 212, 170, 0.1);
-        }
-
-        /* ============ FREEMIUM COUNTER ============ */
-        .freemium-banner {
-            background: linear-gradient(135deg, #1a1f2e 0%, #262d3d 100%);
-            border: 1px solid #3a4451;
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .scan-counter {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .counter-text {
-            font-size: 14px;
-            color: #B0B8C1;
-        }
-
-        .counter-badge {
-            background: #00D4AA;
-            color: #0A0E12;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 13px;
-            min-width: 50px;
-            text-align: center;
-        }
-
-        .counter-badge.warning {
-            background: #FF9500;
-        }
-
-        .counter-badge.limit {
-            background: #FF3B30;
-        }
-
-        .progress-bar {
-            flex: 1;
-            height: 6px;
-            background: #1a1f2e;
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 0 12px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00D4AA 0%, #34C759 100%);
-            transition: width 0.3s ease;
-        }
-
-        /* ============ RECOMMENDATION CARD ============ */
-        .recommendation-container {
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            animation: slideUp 0.4s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .recommendation-header {
-            padding: 24px 20px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .recommendation-header.green {
-            background: linear-gradient(135deg, #1a5c3c 0%, #0a3d1f 100%);
-            border-left: 4px solid #34C759;
-        }
-
-        .recommendation-header.yellow {
-            background: linear-gradient(135deg, #5c4a1a 0%, #3d2a0a 100%);
-            border-left: 4px solid #FF9500;
-        }
-
-        .recommendation-header.red {
-            background: linear-gradient(135deg, #5c1a1a 0%, #3d0a0a 100%);
-            border-left: 4px solid #FF3B30;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .status-badge.green {
-            background: rgba(52, 199, 89, 0.2);
-            color: #34C759;
-            border: 1px solid #34C759;
-        }
-
-        .status-badge.yellow {
-            background: rgba(255, 149, 0, 0.2);
-            color: #FF9500;
-            border: 1px solid #FF9500;
-        }
-
-        .status-badge.red {
-            background: rgba(255, 59, 48, 0.2);
-            color: #FF3B30;
-            border: 1px solid #FF3B30;
-        }
-
-        .status-title {
-            font-size: 28px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .status-emoji {
-            font-size: 36px;
-            display: inline-block;
-            margin-right: 12px;
-            line-height: 1;
-        }
-
-        .status-message {
-            font-size: 14px;
-            color: #E0E0E0;
-            line-height: 1.6;
-            margin-top: 12px;
-            font-weight: 500;
-        }
-
-        .confidence-meter {
-            margin-top: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-        }
-
-        .confidence-bar {
-            flex: 1;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .confidence-fill {
-            height: 100%;
-        }
-
-        /* ============ METRICS ============ */
-        .metrics-grid {
-            background: #131820;
-            padding: 16px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .metric {
-            background: rgba(255, 255, 255, 0.04);
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .metric-label {
-            font-size: 11px;
-            color: #8E95A5;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .metric-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #E0E0E0;
-        }
-
-        .metric-unit {
-            font-size: 12px;
-            color: #5E6978;
-            margin-left: 4px;
-        }
-
-        .metric.highlight {
-            background: rgba(52, 199, 89, 0.1);
-            border-color: rgba(52, 199, 89, 0.3);
-        }
-
-        /* ============ ACTION BUTTONS ============ */
-        .action-buttons {
-            background: #0A0E12;
-            padding: 16px;
-            display: flex;
-            gap: 12px;
-            flex-direction: column;
-        }
-
-        .btn-action {
-            padding: 14px 20px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-list {
-            background: #00D4AA;
-            color: #0A0E12;
-        }
-
-        .btn-list:active {
-            transform: scale(0.98);
-            opacity: 0.85;
-        }
-
-        .btn-save {
-            background: transparent;
-            color: #00D4AA;
-            border: 2px solid #00D4AA;
-        }
-
-        .btn-save:active {
-            background: rgba(0, 212, 170, 0.1);
-        }
-
-        /* ============ GAMIFICATION ============ */
-        .gamification-banner {
-            background: linear-gradient(135deg, #1a4a5c 0%, #0a2a3d 100%);
-            border: 1px solid #3a6a7a;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            text-align: center;
-            animation: slideUp 0.4s ease-out;
-        }
-
-        .gamification-emoji {
-            font-size: 28px;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .gamification-text {
-            font-size: 14px;
-            line-height: 1.5;
-            color: #E0E0E0;
-            font-weight: 500;
-        }
-
-        .highlight-text {
-            color: #00D4AA;
-            font-weight: 700;
-        }
-
-        /* ============ PAYWALL ============ */
-        .paywall-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: flex-end;
-            z-index: 1000;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .paywall-card {
-            background: #131820;
-            border-radius: 20px 20px 0 0;
-            padding: 24px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            animation: slideUpPaywall 0.4s ease;
-        }
-
-        @keyframes slideUpPaywall {
-            from {
-                transform: translateY(100%);
-            }
-            to {
-                transform: translateY(0);
-            }
-        }
-
-        .paywall-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: none;
-            border: none;
-            color: #E0E0E0;
-            font-size: 24px;
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .paywall-title {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
-        .paywall-subtitle {
-            color: #8E95A5;
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .plan-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .plan-card.featured {
-            border-color: #00D4AA;
-            background: rgba(0, 212, 170, 0.1);
-            transform: scale(1.02);
-        }
-
-        .plan-name {
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .plan-price {
-            font-size: 24px;
-            font-weight: 800;
-            color: #00D4AA;
-            margin-bottom: 12px;
-        }
-
-        .plan-features {
-            font-size: 12px;
-            color: #8E95A5;
-            line-height: 1.8;
-        }
-
-        .plan-features strong {
-            color: #34C759;
-        }
-
-        /* ============ WELCOME SCREEN ============ */
-        .welcome-screen {
-            display: none;
-            flex: 1;
-            padding: 32px 20px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .welcome-screen.active {
-            display: flex;
-        }
-
-        .welcome-title {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 16px;
-            letter-spacing: 1px;
-        }
-
-        .welcome-subtitle {
-            font-size: 16px;
-            color: #B0B8C1;
-            margin-bottom: 32px;
-            line-height: 1.6;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .feature {
-            background: rgba(0, 212, 170, 0.1);
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(0, 212, 170, 0.3);
-        }
-
-        .feature-emoji {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .feature-text {
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        /* ============ RESPONSIVE ============ */
-        @media (max-width: 480px) {
-            .status-title {
-                font-size: 24px;
-            }
-
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .metric-value {
-                font-size: 18px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <!-- HEADER -->
-    <header>
-        <div class="header-title">Resellers</div>
-        <div class="header-actions">
-            <button class="icon-btn" id="historyBtn" title="Historial">📋</button>
-            <button class="icon-btn" id="settingsBtn" title="Configuración">⚙️</button>
-        </div>
-    </header>
-
-    <!-- MAIN CONTENT -->
-    <div class="content">
-        <!-- WELCOME SCREEN -->
-        <div class="welcome-screen active" id="welcomeScreen">
-            <div class="welcome-title">Resellers</div>
-            <div class="welcome-subtitle">Escanea cualquier código de barras.<br>Sabe al instante si vale la pena vender.</div>
-            
-            <div class="feature-grid">
-                <div class="feature">
-                    <div class="feature-emoji">🌍</div>
-                    <div class="feature-text">eBay Global</div>
-                </div>
-                <div class="feature">
-                    <div class="feature-emoji">⚡</div>
-                    <div class="feature-text">Datos en vivo</div>
-                </div>
-                <div class="feature">
-                    <div class="feature-emoji">💰</div>
-                    <div class="feature-text">Máximo margen</div>
-                </div>
-                <div class="feature">
-                    <div class="feature-emoji">📊</div>
-                    <div class="feature-text">Análisis claro</div>
-                </div>
-            </div>
-
-            <button class="btn btn-primary" id="startScanBtn" style="width: 100%; padding: 16px;">
-                📱 EMPEZAR A ESCANEAR
-            </button>
-        </div>
-
-        <!-- SCANNER SECTION -->
-        <div class="scanner-section" id="scannerSection">
-            <div id="interactive" class="videoContainer"></div>
-            
-            <div class="scanner-controls">
-                <button class="btn btn-primary" id="camerToggleBtn">📷 Cámara</button>
-                <button class="btn btn-secondary" id="uploadBtn">📤 Foto</button>
-                <button class="btn btn-secondary" id="searchBtn">🔍 Buscar</button>
-            </div>
-        </div>
-
-        <!-- FREEMIUM COUNTER -->
-        <div class="freemium-banner" id="freemiumBanner">
-            <div class="scan-counter">
-                <span class="counter-text">Escaneos gratis:</span>
-                <span class="counter-badge" id="counterBadge">5 de 5</span>
-            </div>
-            <div style="flex: 1; margin: 0 12px;">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- GAMIFICATION BANNER -->
-        <div id="gamificationBanner"></div>
-
-        <!-- RECOMMENDATION CARD -->
-        <div class="recommendation-container" id="recommendationContainer" style="display: none;">
-            <div class="recommendation-header" id="recommendationHeader">
-                <div class="status-badge" id="statusBadge">
-                    <span class="status-emoji" id="statusEmoji">🟢</span>
-                    VENDE ESTO
-                </div>
-                <div class="status-title" id="statusTitle">VENDE ESTO</div>
-                <div class="status-message" id="statusMessage">
-                    Producto con excelente potencial de venta.
-                </div>
-                <div class="confidence-meter">
-                    <span style="font-size: 11px; color: #8E95A5;">Confianza</span>
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" id="confidenceFill" style="width: 95%; background: #34C759;"></div>
-                    </div>
-                    <span id="confidenceText" style="color: #34C759;">95%</span>
-                </div>
-            </div>
-
-            <div class="metrics-grid">
-                <div class="metric highlight">
-                    <div class="metric-label">Margen</div>
-                    <div class="metric-value" id="marginValue">$0<span class="metric-unit">0%</span></div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">ROI</div>
-                    <div class="metric-value" id="roiValue">0<span class="metric-unit">%</span></div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Precio eBay</div>
-                    <div class="metric-value" id="priceValue">$0</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Vender en ~</div>
-                    <div class="metric-value" id="daysValue">0<span class="metric-unit">días</span></div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">vs Tu Promedio</div>
-                    <div class="metric-value" id="compareValue">0<span class="metric-unit">%</span></div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Competencia</div>
-                    <div class="metric-value" id="competenceValue">0<span class="metric-unit">vendedores</span></div>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn-action btn-list" id="listBtn">📱 LISTAR EN EBAY</button>
-                <button class="btn-action btn-save" id="saveBtn">⭐ GUARDAR</button>
-            </div>
-        </div>
-
-        <!-- NEXT SCAN BUTTON -->
-        <button class="btn btn-secondary" id="nextScanBtn" style="width: 100%; margin-top: 12px; display: none;">
-            Escanear otro producto
-        </button>
+<!-- 
+RECOMENDACIÓN MINIMALISTA ESTILO APPLE
+Reemplaza TODO después de "Recommendation" con esto
+-->
+
+<!-- FREEMIUM COUNTER - MINIMALISTA -->
+<div id="freemiumBanner" style="display: none; padding: 12px 16px; margin-bottom: 12px; border-radius: 10px; background: #F5F5F7; border: 1px solid #E5E5EA;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-size: 13px; color: #666; font-weight: 500;">Escaneos gratis</span>
+        <span id="counterBadge" style="font-size: 13px; font-weight: 600; color: #007AFF;">5 de 5</span>
+    </div>
+    <div style="height: 4px; background: #E5E5EA; border-radius: 2px; overflow: hidden;">
+        <div id="progressFill" style="height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease;"></div>
     </div>
 </div>
 
-<!-- PAYWALL MODAL -->
-<div class="paywall-overlay" id="paywallOverlay" style="display: none;">
-    <div class="paywall-card">
-        <button class="paywall-close" id="paywallClose">&times;</button>
-        <h2 class="paywall-title">🚀 Desbloquea Resellers Pro</h2>
-        <p class="paywall-subtitle">Escanea ilimitado + monitoreo + insights premium</p>
+<!-- GAMIFICATION - MINIMALISTA -->
+<div id="gamificationBanner" style="display: none; padding: 12px 16px; margin-bottom: 12px; border-radius: 10px; background: #F5F5F7; border: 1px solid #E5E5EA;">
+    <div id="gamificationText" style="font-size: 13px; color: #333; line-height: 1.5;"></div>
+</div>
 
-        <div class="plan-card featured">
-            <div class="plan-name">💎 Resellers Pro</div>
-            <div class="plan-price">$9.99<span style="font-size: 12px; color: #8E95A5;">/mes</span></div>
-            <div class="plan-features">
-                <strong>✓ Escaneos ilimitados</strong><br>
+<!-- RECOMMENDATION SECTION -->
+<div id="recommendationSection" style="display: none;">
+    
+    <!-- VIABILIDAD CARD - SUPER MINIMALISTA -->
+    <div style="padding: 20px 16px; margin-bottom: 12px; border-radius: 12px; background: #F5F5F7; border: 1px solid #E5E5EA;">
+        
+        <!-- STATUS INDICATOR -->
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div id="statusDot" style="width: 12px; height: 12px; border-radius: 50%; background: #34C759;"></div>
+            <div>
+                <div id="statusTitle" style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 2px;">Vende esto</div>
+                <div id="statusMessage" style="font-size: 13px; color: #666;">Excelente margen de ganancia</div>
+            </div>
+        </div>
+
+        <!-- METRICS GRID - LIMPIO -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <!-- Margen -->
+            <div>
+                <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; font-weight: 500;">Margen</div>
+                <div style="font-size: 20px; font-weight: 600; color: #000;"><span id="marginValue">$0</span></div>
+                <div style="font-size: 11px; color: #999; margin-top: 2px;">30% ganancia</div>
+            </div>
+            
+            <!-- Precio -->
+            <div>
+                <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; font-weight: 500;">Precio eBay</div>
+                <div style="font-size: 20px; font-weight: 600; color: #000;"><span id="priceValue">$0</span></div>
+                <div style="font-size: 11px; color: #999; margin-top: 2px;">promedio</div>
+            </div>
+            
+            <!-- ROI -->
+            <div>
+                <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; font-weight: 500;">ROI</div>
+                <div style="font-size: 20px; font-weight: 600; color: #000;"><span id="roiValue">0</span>%</div>
+                <div style="font-size: 11px; color: #999; margin-top: 2px;">retorno</div>
+            </div>
+            
+            <!-- Días -->
+            <div>
+                <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; font-weight: 500;">Vender en</div>
+                <div style="font-size: 20px; font-weight: 600; color: #000;"><span id="daysValue">0</span> días</div>
+                <div style="font-size: 11px; color: #999; margin-top: 2px;">promedio</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS - MINIMALISTAS -->
+    <button id="listBtn" style="width: 100%; padding: 12px 16px; margin-bottom: 8px; background: #007AFF; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Listar en eBay</button>
+    <button id="saveBtn" style="width: 100%; padding: 12px 16px; margin-bottom: 12px; background: #F5F5F7; color: #007AFF; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Guardar para después</button>
+    <button id="nextScanBtn" style="width: 100%; padding: 12px 16px; background: white; color: #007AFF; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Escanear otro</button>
+</div>
+
+<!-- PAYWALL - MINIMALISTA APPLE -->
+<div id="paywallOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); display: flex; align-items: flex-end; z-index: 1000;">
+    <div style="background: white; border-radius: 20px 20px 0 0; padding: 32px 16px 24px; width: 100%; max-height: 80vh; overflow-y: auto;">
+        <button id="paywallClose" style="position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">✕</button>
+        
+        <h2 style="font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 8px;">Resellers Pro</h2>
+        <p style="font-size: 16px; color: #666; text-align: center; margin-bottom: 32px;">Escanea ilimitado y recibe insights personalizados</p>
+
+        <!-- PLAN PRINCIPAL -->
+        <div style="padding: 20px; border: 2px solid #007AFF; border-radius: 12px; margin-bottom: 12px; background: #F0F8FF;">
+            <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Resellers Pro</div>
+            <div style="font-size: 32px; font-weight: 700; color: #007AFF; margin-bottom: 12px;">$9.99<span style="font-size: 14px; color: #666;"> / mes</span></div>
+            <div style="font-size: 13px; color: #333; line-height: 1.8; margin-bottom: 16px;">
+                ✓ Escaneos ilimitados<br>
                 ✓ Monitoreo de precios<br>
-                ✓ Insights por categoría<br>
-                ✓ Notificaciones de oportunidades<br>
-                ✓ Historial completo
+                ✓ Historial completo<br>
+                ✓ Cancelar cuando quieras
             </div>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 12px; padding: 12px;">Empezar 7 días gratis</button>
+            <button style="width: 100%; padding: 12px; background: #007AFF; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Prueba gratis 7 días</button>
         </div>
 
-        <div class="plan-card">
-            <div class="plan-name">📅 Acceso 1 mes</div>
-            <div class="plan-price">$7.99</div>
-            <div class="plan-features">
-                ✓ 30 días acceso completo<br>
-                ✓ Cancela cuando quieras
-            </div>
-            <button class="btn btn-secondary" style="width: 100%; margin-top: 12px; padding: 12px;">Comprar acceso</button>
+        <!-- PLAN ALTERNATIVO -->
+        <div style="padding: 20px; border: 1px solid #E5E5EA; border-radius: 12px; margin-bottom: 16px;">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Acceso 1 mes</div>
+            <div style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">$7.99</div>
+            <button style="width: 100%; padding: 12px; background: #F5F5F7; color: #007AFF; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Comprar acceso</button>
         </div>
 
-        <p style="text-align: center; font-size: 12px; color: #5E6978; margin-top: 20px; margin-bottom: 16px;">
-            o continúa gratis con
-        </p>
-        <button class="btn btn-secondary" id="freeTrialBtn" style="width: 100%; padding: 12px;">7 DÍAS DE TRIAL GRATIS</button>
+        <button id="freeTrialBtn" style="width: 100%; padding: 12px; background: white; color: #007AFF; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Continuar con trial</button>
     </div>
 </div>
+
+<style>
+    button:active {
+        opacity: 0.8;
+    }
+    
+    #counterBadge {
+        transition: color 0.3s ease;
+    }
+</style>
 
 <script>
     /**
-     * RESELLERS APP v2 - COMPLETE CONTROLLER
-     * Sistema de viabilidad + Freemium + Gamificación + Oportunidades
+     * RESELLERS - RECOMMENDATION ENGINE MINIMALISTA
      */
 
-    class ResellersApp {
+    class MinimalRecommendationEngine {
         constructor() {
             this.SCAN_LIMIT = 5;
-            this.currentProduct = null;
             this.loadData();
             this.attachEventListeners();
-            this.initializeUI();
         }
 
-        // ==================== DATA ==================== 
         loadData() {
             this.scans = JSON.parse(localStorage.getItem('resellers_scans')) || [];
             this.savedProducts = JSON.parse(localStorage.getItem('resellers_saved')) || [];
-            this.userStats = JSON.parse(localStorage.getItem('resellers_stats')) || {
-                totalScans: 0,
-                bestCategory: null,
-                categoryPerformance: {}
-            };
         }
 
         saveData() {
             localStorage.setItem('resellers_scans', JSON.stringify(this.scans));
             localStorage.setItem('resellers_saved', JSON.stringify(this.savedProducts));
-            localStorage.setItem('resellers_stats', JSON.stringify(this.userStats));
         }
 
-        // ==================== EVENT LISTENERS ====================
         attachEventListeners() {
-            document.getElementById('startScanBtn').addEventListener('click', () => this.startScanning());
-            document.getElementById('camerToggleBtn').addEventListener('click', () => this.toggleCamera());
-            document.getElementById('nextScanBtn').addEventListener('click', () => this.onNextScan());
-            document.getElementById('listBtn').addEventListener('click', () => this.onListProduct());
-            document.getElementById('saveBtn').addEventListener('click', () => this.onSaveProduct());
-            document.getElementById('paywallClose').addEventListener('click', () => this.closePaywall());
-            document.getElementById('freeTrialBtn').addEventListener('click', () => this.startTrial());
-            document.getElementById('historyBtn').addEventListener('click', () => this.showHistory());
-            document.getElementById('settingsBtn').addEventListener('click', () => this.showSettings());
+            document.getElementById('nextScanBtn')?.addEventListener('click', () => this.onNextScan());
+            document.getElementById('listBtn')?.addEventListener('click', () => this.onListProduct());
+            document.getElementById('saveBtn')?.addEventListener('click', () => this.onSaveProduct());
+            document.getElementById('paywallClose')?.addEventListener('click', () => this.closePaywall());
+            document.getElementById('freeTrialBtn')?.addEventListener('click', () => this.startTrial());
         }
 
-        // ==================== UI INITIALIZATION ====================
-        initializeUI() {
+        // Mostrar recomendación (llamar desde tu código cuando tengas datos)
+        showRecommendation(productData) {
+            const analysis = this.analyzeProduct(productData);
+            this.renderRecommendation(analysis, productData);
             this.updateFreemiumCounter();
             this.checkGameification();
+            document.getElementById('recommendationSection').style.display = 'block';
+            document.getElementById('freemiumBanner').style.display = 'block';
         }
 
-        startScanning() {
-            document.getElementById('welcomeScreen').classList.remove('active');
-            document.getElementById('scannerSection').classList.add('active');
-            document.getElementById('freemiumBanner').style.display = 'flex';
+        analyzeProduct(productData) {
+            const margin = productData.margin || 0;
+            const roi = productData.roi || 0;
+            const referencesCount = productData.referencesCount || 3;
+
+            let status = 'Pasa';
+            let statusColor = '#FF3B30';
+            let message = 'Margen bajo';
+
+            if (margin >= 30 || roi >= 50) {
+                status = 'Vende esto';
+                statusColor = '#34C759';
+                message = 'Excelente margen de ganancia';
+            } else if (margin >= 15 || roi >= 25) {
+                status = 'Considera';
+                statusColor = '#FF9500';
+                message = 'Margen moderado, venta lenta';
+            }
+
+            const sellSpeedDays = referencesCount > 50 ? 14 : referencesCount > 20 ? 10 : referencesCount > 10 ? 7 : 3;
+
+            return {
+                status,
+                statusColor,
+                message,
+                margin,
+                roi,
+                sellSpeedDays,
+                referencesCount
+            };
         }
 
-        toggleCamera() {
-            alert('Abre la cámara');
+        renderRecommendation(analysis, productData) {
+            document.getElementById('statusDot').style.background = analysis.statusColor;
+            document.getElementById('statusTitle').textContent = analysis.status;
+            document.getElementById('statusMessage').textContent = analysis.message;
+
+            document.getElementById('marginValue').textContent = '$' + analysis.margin.toFixed(2);
+            document.getElementById('priceValue').textContent = '$' + (productData.averagePrice || 0).toFixed(2);
+            document.getElementById('roiValue').textContent = analysis.roi.toFixed(0);
+            document.getElementById('daysValue').textContent = analysis.sellSpeedDays;
         }
 
-        // ==================== FREEMIUM SYSTEM ====================
         updateFreemiumCounter() {
             const remaining = Math.max(0, this.SCAN_LIMIT - this.scans.length);
             const used = this.scans.length;
@@ -834,12 +205,14 @@
             document.getElementById('counterBadge').textContent = `${remaining} de ${this.SCAN_LIMIT}`;
             document.getElementById('progressFill').style.width = percentage + '%';
 
+            // Cambiar color solo si está cerca del límite
             const badge = document.getElementById('counterBadge');
-            badge.classList.remove('warning', 'limit');
             if (remaining === 0) {
-                badge.classList.add('limit');
+                badge.style.color = '#FF3B30';
             } else if (remaining <= 2) {
-                badge.classList.add('warning');
+                badge.style.color = '#FF9500';
+            } else {
+                badge.style.color = '#007AFF';
             }
         }
 
@@ -848,106 +221,20 @@
             let message = null;
 
             if (totalScans === 5) {
-                message = '🎯 Notamos que tus mejores ganancias vienen de electrónica. Sigue enfocándote ahí.';
+                message = '🎯 Patrón detectado: Tus mejores márgenes son en electrónica.';
             } else if (totalScans === 10) {
-                message = '💡 Patrón detectado: Tienes 35% margen en electrónica. Ese es tu nicho.';
+                message = '💡 Especialidad: Electrónica de menos de $20 es tu nicho.';
             } else if (totalScans === 20) {
-                message = '🏆 Eres experto en electrónica de menos de $20. Domina ese segmento.';
+                message = '⭐ Experto en electrónica. Sigue dominando ese segmento.';
             }
 
             if (message) {
                 const banner = document.getElementById('gamificationBanner');
-                banner.innerHTML = `
-                    <div class="gamification-banner">
-                        <span class="gamification-emoji">${message.split(':')[0]}</span>
-                        <div class="gamification-text">
-                            <span class="highlight-text">${message.split(':')[0]}:</span> ${message.split(':')[1] || message}
-                        </div>
-                    </div>
-                `;
+                banner.innerHTML = `<div style="font-size: 13px; color: #333;">${message}</div>`;
+                banner.style.display = 'block';
             }
         }
 
-        // ==================== VIABILITY ANALYSIS ====================
-        analyzeProduct(productData) {
-            const margin = productData.margin || 0;
-            const roi = productData.roi || 0;
-            const referencesCount = productData.referencesCount || 0;
-
-            let status = 'PASA';
-            let statusColor = 'red';
-            let confidence = 0;
-
-            if (margin >= 30 || roi >= 50) {
-                status = 'VENDE ESTO';
-                statusColor = 'green';
-                confidence = 95;
-            } else if (margin >= 15 || roi >= 25) {
-                status = 'CONSIDERA';
-                statusColor = 'yellow';
-                confidence = 70;
-            }
-
-            const sellSpeedDays = referencesCount > 50 ? 14 : referencesCount > 20 ? 10 : referencesCount > 10 ? 7 : 3;
-            const userAvgMargin = this.getUserAverageMargin();
-            const marginVsAverage = userAvgMargin > 0 ? ((margin - userAvgMargin) / userAvgMargin * 100).toFixed(0) : 0;
-
-            let message = '';
-            if (status === 'VENDE ESTO') {
-                message = `✅ ${marginVsAverage > 0 ? 'Este margen es ' + marginVsAverage + '% mejor que tu promedio.' : 'Excelente margen.'} Esperado vender en ~${sellSpeedDays} días.`;
-            } else if (status === 'CONSIDERA') {
-                message = `⏳ Viable pero lento. Tardaría ~${sellSpeedDays} días. Considera si tu tiempo vale.`;
-            } else {
-                message = `❌ No vale la pena. Margen muy bajo (${margin}%).`;
-            }
-
-            return {
-                status,
-                statusColor,
-                confidence,
-                margin,
-                roi,
-                sellSpeedDays,
-                referencesCount,
-                marginVsAverage,
-                message
-            };
-        }
-
-        renderRecommendation(analysis, productData) {
-            const container = document.getElementById('recommendationContainer');
-            const header = document.getElementById('recommendationHeader');
-
-            header.className = `recommendation-header ${analysis.statusColor}`;
-            document.getElementById('statusEmoji').textContent = this.getEmoji(analysis.status);
-            document.getElementById('statusTitle').textContent = analysis.status;
-            document.getElementById('statusMessage').textContent = analysis.message;
-            document.getElementById('confidenceFill').style.background = this.getConfidenceColor(analysis.statusColor);
-            document.getElementById('confidenceText').textContent = analysis.confidence + '%';
-            document.getElementById('confidenceText').style.color = this.getConfidenceColor(analysis.statusColor);
-
-            document.getElementById('marginValue').innerHTML = `$${analysis.margin.toFixed(2)}<span class="metric-unit">${((analysis.margin / (productData.cost || 1)) * 100).toFixed(0)}%</span>`;
-            document.getElementById('roiValue').textContent = analysis.roi.toFixed(0) + '%';
-            document.getElementById('priceValue').textContent = '$' + (productData.averagePrice || 0).toFixed(2);
-            document.getElementById('daysValue').innerHTML = `${analysis.sellSpeedDays}<span class="metric-unit">días</span>`;
-            document.getElementById('compareValue').innerHTML = `${analysis.marginVsAverage > 0 ? '+' : ''}${analysis.marginVsAverage}<span class="metric-unit">%</span>`;
-            document.getElementById('competenceValue').innerHTML = `${analysis.referencesCount}<span class="metric-unit">vendedores</span>`;
-
-            container.style.display = 'block';
-            document.getElementById('nextScanBtn').style.display = 'block';
-        }
-
-        getEmoji(status) {
-            const emojis = { 'VENDE ESTO': '🟢', 'CONSIDERA': '🟡', 'PASA': '🔴' };
-            return emojis[status] || '⚪';
-        }
-
-        getConfidenceColor(statusColor) {
-            const colors = { 'green': '#34C759', 'yellow': '#FF9500', 'red': '#FF3B30' };
-            return colors[statusColor] || '#E0E0E0';
-        }
-
-        // ==================== ACTIONS ====================
         onNextScan() {
             this.scans.push({ id: Date.now() });
             this.saveData();
@@ -957,61 +244,36 @@
                 this.showPaywall();
             }
 
-            document.getElementById('recommendationContainer').style.display = 'none';
-            document.getElementById('nextScanBtn').style.display = 'none';
+            document.getElementById('recommendationSection').style.display = 'none';
         }
 
         onListProduct() {
-            if (this.currentProduct) {
-                window.open('https://www.ebay.com', '_blank');
-            }
+            window.open('https://www.ebay.com', '_blank');
         }
 
         onSaveProduct() {
-            if (this.currentProduct) {
-                this.savedProducts.push({ ...this.currentProduct, savedAt: new Date().toISOString() });
-                this.saveData();
-                alert('✅ Producto guardado');
-            }
+            this.savedProducts.push({ id: Date.now() });
+            this.saveData();
+            alert('Guardado');
         }
 
         showPaywall() {
             document.getElementById('paywallOverlay').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
         }
 
         closePaywall() {
             document.getElementById('paywallOverlay').style.display = 'none';
-            document.body.style.overflow = 'auto';
         }
 
         startTrial() {
             localStorage.setItem('resellers_trial_active', 'true');
-            localStorage.setItem('resellers_trial_start', new Date().toISOString());
             this.closePaywall();
-            alert('✅ 7 días de trial activados');
-        }
-
-        showHistory() {
-            alert('Historial: ' + this.scans.length + ' escaneos');
-        }
-
-        showSettings() {
-            alert('Configuración');
-        }
-
-        getUserAverageMargin() {
-            if (this.scans.length === 0) return 0;
-            const total = this.scans.reduce((sum, scan) => sum + (scan.margin || 0), 0);
-            return (total / this.scans.length).toFixed(2);
+            alert('Trial de 7 días activado');
         }
     }
 
-    // Inicializar app cuando DOM esté listo
-    document.addEventListener('DOMContentLoaded', () => {
-        new ResellersApp();
-    });
+    // Inicializar
+    const minimalEngine = new MinimalRecommendationEngine();
+    window.ResellersRecommendation = minimalEngine;
 </script>
 
-</body>
-</html>
