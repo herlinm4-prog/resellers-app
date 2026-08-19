@@ -2902,35 +2902,67 @@
     btn.textContent = s.watchWorking;
 
     const targets = saved.slice(0, 8);
-    let index = 0, changed = 0, lastMessage = null;
+    let changed = 0, lastMessage = null;
 
-    function step(){
-      if(index >= targets.length){
-        localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
-        watchRunning = false;
-        btn.textContent = s.watchBtn;
-        renderHistoryList();
-        showToast(changed ? (lastMessage || s.watchDone(changed)) : s.watchNone);
-        return;
+    // Aplica un precio nuevo sobre un producto guardado y anota si cambió lo
+    // suficiente como para avisarle al usuario.
+    function applyPrice(item, suggested){
+      if(!suggested) return;
+      const base = item.priceCheck ? Number(item.priceCheck.base) : Number(item.suggested);
+      if(!base) return;
+      item.priceCheck = { base, current: Number(suggested), at: Date.now() };
+      const pct = Math.round(((suggested - base) / base) * 100);
+      if(Math.abs(pct) >= 4){
+        changed++;
+        const short = item.name.length > 34 ? item.name.slice(0, 32) + '…' : item.name;
+        lastMessage = pct < 0 ? s.dropMsg(short, Math.abs(pct)) : s.riseMsg(short, pct);
       }
-      const item = targets[index++];
-      fetchScanOnce({ query: item.query || item.name }, 25000)
-        .then(data => {
-          if(data && data.found && data.suggested){
-            const base = item.priceCheck ? Number(item.priceCheck.base) : Number(item.suggested);
-            item.priceCheck = { base, current: Number(data.suggested), at: Date.now() };
-            const pct = Math.round(((data.suggested - base) / base) * 100);
-            if(Math.abs(pct) >= 4){
-              changed++;
-              const short = item.name.length > 34 ? item.name.slice(0, 32) + '…' : item.name;
-              lastMessage = pct < 0 ? s.dropMsg(short, Math.abs(pct)) : s.riseMsg(short, pct);
-            }
-          }
-        })
-        .catch(() => {})
-        .then(step);
     }
-    step();
+
+    function finish(){
+      localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
+      watchRunning = false;
+      btn.textContent = s.watchBtn;
+      renderHistoryList();
+      showToast(changed ? (lastMessage || s.watchDone(changed)) : s.watchNone);
+    }
+
+    // Camino rápido: una sola petición para los ocho productos. El backend
+    // los resuelve con su caché, así que normalmente vuelve casi al instante
+    // en vez de encadenar ocho arranques en frío de Render.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60000);
+
+    fetch(BACKEND_URL + '/api/watch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: targets.map((item, i) => ({ id: i, query: item.query || item.name }))
+      }),
+      signal: controller.signal
+    }).then(res => {
+      clearTimeout(timer);
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).then(data => {
+      (data.results || []).forEach(r => {
+        if(r.ok && r.found) applyPrice(targets[r.id], r.suggested);
+      });
+      finish();
+    }).catch(() => {
+      clearTimeout(timer);
+      // Si el backend todavía no tiene /api/watch, se revisa uno por uno como
+      // antes. Más lento, pero el botón nunca se queda muerto.
+      let index = 0;
+      (function step(){
+        if(index >= targets.length) return finish();
+        const item = targets[index++];
+        fetchScanOnce({ query: item.query || item.name }, 25000)
+          .then(d => { if(d && d.found) applyPrice(item, d.suggested); })
+          .catch(() => {})
+          .then(step);
+      })();
+    });
   }
 
   /* ---------- Enganches de idioma ---------- */
