@@ -1,0 +1,32 @@
+{
+  "name": "Resellers — Scan it. Know what it's worth.",
+  "short_name": "Resellers",
+  "description": "Escanea el código de barras de un producto y descubre al instante si vale la pena revenderlo en eBay.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0E12",
+  "theme_color": "#0A0E12",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
